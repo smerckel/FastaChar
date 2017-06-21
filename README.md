@@ -2,17 +2,17 @@ Fastachar
 =========
 
 *Fastachar* is a graphical user interface that allows a simple
-comparison of two groups of dna sequences. A typical working example
-is to have a selection of dna sequences of different, but related
-species. These sequences are divided in a group A, which are thought
-to be a single species and a group B, which is a collection of
+comparison of two sets of DNA sequences. A typical working example
+is to have a selection of DNA sequences of different, but related
+species. These sequences are divided in a set A, which are thought
+to be a single species and a set B, which is a collection of
 different species. Using the program, it can be established easily whether:
 
-* the dna sequences in group A are all identical, and if not, list the
-  differences for those positions in the dna sequences.
+* the DNA sequences in set A are all identical, and if not, list the
+  differences for those positions in the DNA sequences.
 
-* group B has positions in the dna that are different from those in
-  group A,  across *all* species in group B.
+* set B has positions in the DNA that are different from those in
+  set A,  across *all* species in set B.
 
 *Fastachar* takes as input the alignments stored in a single file of
 the fasta format. *Fastachar* is not a tool to align sequences. It is
@@ -46,7 +46,7 @@ you will need to install tkinter yourself, which is probably best done
 via your distribution's package manager.
 
 *Fastachar* can be installed from pypi, using pip from the command
-line:::
+line::
   
   $ pip3 install fastachar
   
