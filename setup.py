@@ -15,7 +15,7 @@ setup(name="fastachar",
 that allows to compare a group of aligned DNA sequences with another group of
 aligned DNA sequences. Different operations can be specified such as find
 differences or correspondences.""",
-    url='http://',
+    url='http://cubic-l.science/fastachar.html',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
@@ -25,5 +25,5 @@ differences or correspondences.""",
                   'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
         'Programming Language :: Python',
-        'Topic :: Scientific/Engineering :: Bioinformatics',
+        'Topic :: Scientific/Engineering',
     ])
