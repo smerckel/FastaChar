@@ -1,10 +1,10 @@
-Programming with *fasta*
+Programming with **fasta**
 ========================
 
 
 The graphical user interface is intended to provide easy access to the
-functionality offered by the *fasta* module. Rather than using the
-graphical interface, the user can also create her own python scripts.
+functionality offered by the **fasta** module. Rather than using the
+graphical interface, the user can also create her/his own python scripts.
 
 Example script
 --------------
@@ -13,7 +13,7 @@ Example script
    
    # Example script how to do an analysis of a fasta file accessing the
    # fasta module directly, and not using a graphical interface. The
-   # example script reads a fasta file, and divides all the species in a
+   # example script reads a fasta file, and divides all the species in
    # two sets, one that with species names that match a regular
    # expression, and a set with sequences that does not match the regular
    # expression. Then, for set A, the differences within this set as well
