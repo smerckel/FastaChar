@@ -1,5 +1,5 @@
 Programming with **fasta**
-========================
+==========================
 
 
 The graphical user interface is intended to provide easy access to the

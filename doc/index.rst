@@ -1,5 +1,10 @@
-Fastachar Manual
-================
+.. FastaChar documentation master file, created by
+   sphinx-quickstart on Wed Jun 28 15:38:29 2017.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+FastaChar's documentation
+=========================
 
 This manual covers the use of the program **Fastachar**, which is aimed
 at facilitating the comparison of pre-aligned DNA sequences between:
@@ -15,28 +20,15 @@ code.
 
 .. toctree::
    :maxdepth: 1
-
-   installation   
+   :caption: Contents:
+	     
    howto
+   installation   
    programming_with_fasta
-
+   
 References to the fasta source code
 =======================================
-
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-   
-.. note::
-
-   The **Fastachar** software is written for Python3. The use of
-   Python2.x is currently not supported, although it probably does not
-   require too much effort to modify it for Python2. If in doubt what
-   to use, either Python2 or Python3, use Python3.
-
-.. seealso::
-
-    `FastaChar github repository <http://github.com/smerckel/fastachar>`_
-          Fastachar source code.
