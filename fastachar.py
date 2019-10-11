@@ -11,13 +11,6 @@ import configparser
 from fasta import fasta
 from fasta import fastachar_static
 
-OK = 0b0000
-ERROR_FILE_NOT_FOUND = 0b0001
-ERROR_FILE_INVALID = 0b0010
-ERROR_IO           = 0b0011
-ERROR_NO_CASE_DATA = 0b0100
-ERROR_UNKNOWN      = 0b0101
-
 CONFIG = dict(linux = dict(INIFILE = 'fastacharrc',
                            INIPATH = '.config/fastachar'),
               win32 = dict(INIFILE = 'fastachar.ini',
@@ -107,15 +100,27 @@ class Case(object):
         return kwd, value
     
     def load(self, filename):
+        if not os.path.exists(filename):
+            error = fasta.ERROR_FILE_NOT_FOUND
+            arg = filename
+            return error, arg
+        # file exists, now open it.
+        error = fasta.OK
+        arg = ''
         with open(filename,'r') as fp:
             while True:
                 line = fp.readline()
                 if not line:
                     break
-                kwd, value = self.parse_line(line)
-                self.data[kwd]=value
-        
-
+                try:
+                    kwd, value = self.parse_line(line)
+                except ValueError:
+                    error = fasta.ERROR_CASE
+                    arg = line
+                else:
+                    self.data[kwd]=value
+        return error, arg
+    
     def save(self, filename):
         with open(filename,'w') as fp:
             fp.write("filename = {}\n".format(self.data['filename']))
@@ -157,7 +162,7 @@ class Gui():
     def error_window(self, err_code, arg = ''):
         toplevel = Tk.Toplevel()
         if arg:
-            text = " : ".join([arg, fastachar_static.ERRORS[err_code]])
+            text = " : ".join([fastachar_static.ERRORS[err_code], arg])
         else:
             text = fastachar_static.ERRORS[err_code]
         label1 = Tk.Label(toplevel, text=text,
@@ -391,9 +396,13 @@ class Gui():
                                                      #message,
                                                      parent=self.root,
                                                      title="Open fasta file")
-        r = self.open_fasta_file()
-        if r != OK:
-            self.error_window(r, arg=self.fasta_file)
+        r,arg = self.open_fasta_file()
+        if r != fasta.OK:
+            if arg:
+                arg += " (%s)"%(self.fasta_file)
+            else:
+                arg = self.fasta_file
+            self.error_window(r, arg=arg)
             
     def cb_open_case_file(self):
         case_file = filedialog.askopenfilename(defaultextension=".fc",
@@ -405,26 +414,21 @@ class Gui():
                                                parent=self.root,
                                                title="Open case file")
         if case_file:
-            r = self.open_case_file(case_file)
-            if r != OK:
+            r, arg = self.open_case_file(case_file)
+            if r != fasta.OK:
                 self.error_window(r, arg=case_file)
         # else ignore silently
 
         
     def open_fasta_file(self):
-        error = OK
         if self.fasta_file:
-            try:
-                self.S.load(self.fasta_file)
-            except FileNotFoundError:
-                error = ERROR_FILE_NOT_FOUND
-            except ValueError:
-                error = ERROR_FILE_INVALID
-            else:
+            error, arg = self.S.load(self.fasta_file)
+            if error == fasta.OK:
                 try:
                     species = self.S.get_species_list()
                 except:
-                    error = ERROR_FILE_INVALID
+                    error = fasta.ERROR_FILE_INVALID
+                    arg = ''
                 else:
                     species.sort()
                     self.data[self.lb_sequences] = species
@@ -433,27 +437,16 @@ class Gui():
                     self.populate_list_with_items(species, self.lb_sequences, delete_all=True)
                     self.populate_list_with_items([], self.lb_A, delete_all=True)
                     self.populate_list_with_items([], self.lb_B, delete_all=True)
-        return error
+        return error, arg
     
     def open_case_file(self, case_file):
-        error = OK
+        error = fasta.OK
         if case_file:
-            try:
-                self.case.load(case_file)
-            except FileNotFoundError:
-                error = ERROR_FILE_NOT_FOUND
-            except:
-                error = ERROR_FILE_INVALID
-            else:
+            error, arg = self.case.load(case_file)
+            if error == fasta.OK:
                 self.fasta_file = self.case.data['filename']
-                arg = self.fasta_file
-                try:
-                    self.S.load(self.fasta_file)
-                except FileNotFoundError:
-                    error = ERROR_FILE_NOT_FOUND
-                except ValueError:
-                    error = ERROR_FILE_INVALID
-                else:
+                error, arg = self.S.load(self.fasta_file)
+                if error == fasta.OK:
                     self.data[self.lb_sequences] = self.case.data["species"]
                     self.populate_list_with_items(self.case.data["species"],
                                                   self.lb_sequences, delete_all=True)
@@ -464,14 +457,14 @@ class Gui():
                     self.populate_list_with_items(self.case.data["setB"],
                                                   self.lb_B, delete_all=True)
                     self.operation_method.set(self.case.data["operation"])
-        return error
+        return error, arg
 
     def cb_set_working_dir(self):
         self.cwd = filedialog.askdirectory(initialdir=self.cwd) or self.cwd
         self.setcwd(self.cwd)
         
     def cb_save_case_file(self):
-        error = OK
+        error = fasta.OK
         if self.case.data:
             case_file = filedialog.asksaveasfilename(defaultextension=".fc",
                                                      filetypes=[('case files', '.fc'), ('all files', '.*')],
@@ -484,14 +477,14 @@ class Gui():
                 try:
                     self.case.save(case_file)
                 except IOError:
-                    error = ERROR_IO
+                    error = fasta.ERROR_IO
                     arg = case_file
             else:
                 return # cancel clicked. Ignore silently.    
         else:
-            error = ERROR_NO_CASE_DATA
+            error = fasta.ERROR_NO_CASE_DATA
             arg = ''
-        if error != OK:
+        if error != fasta.OK:
             self.error_window(error, arg)
             
     def cb_about(self):
@@ -501,7 +494,7 @@ class Gui():
         self.help_window()
     
     def cb_save_report(self):
-        error = OK
+        error = fasta.OK
         out_file = filedialog.asksaveasfilename(defaultextension=".txt",
                                                 filetypes=[('text files', '.txt'), ('all files', '.*')],
                                                 initialdir=self.cwd,
@@ -515,19 +508,19 @@ class Gui():
             with open(out_file,'w') as fp:
                 fp.write(self.report.get(1., Tk.END))
         except FileNotFoundError:
-            error = ERROR_FILE_NOT_FOUND
+            error = fasta.ERROR_FILE_NOT_FOUND
             arg = out_file
         except IOError:
-            error = ERROR_IO
+            error = fasta.ERROR_IO
             arg = out_file
         except:
-            error = ERROR_UNKNOWN
+            error = fasta.ERROR_UNKNOWN
             arg = out_file
-        if error != OK:
+        if error != fasta.OK:
             self.error_window(error, arg)
 
     def cb_save_report_xls(self):
-        error = OK
+        error = fasta.OK
         out_file = filedialog.asksaveasfilename(defaultextension=".xls",
                                                 filetypes=[('xls files', '.xls'), ('all files', '.*')],
                                                 initialdir=self.cwd,
@@ -541,15 +534,15 @@ class Gui():
         try:
             self.reportxls.save(out_file)
         except FileNotFoundError:
-            error = ERROR_FILE_NOT_FOUND
+            error = fasta.ERROR_FILE_NOT_FOUND
             arg = out_file
         except IOError:
-            error = ERROR_IO
+            error = fasta.ERROR_IO
             arg = out_file
         except:
-            error = ERROR_UNKNOWN
+            error = fasta.ERROR_UNKNOWN
             arg = out_file
-        if error != OK:
+        if error != fasta.OK:
             self.error_window(error, arg)
 
             

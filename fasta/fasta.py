@@ -1,10 +1,21 @@
 from collections import defaultdict
 from itertools import zip_longest
+import os
 import re
 import sys
 
 import numpy as np
 import xlwt
+
+OK = 0b0000
+ERROR_FILE_NOT_FOUND = 0b0001
+ERROR_FILE_INVALID = 0b0010
+ERROR_IO           = 0b0011
+ERROR_NO_CASE_DATA = 0b0100
+ERROR_UNEQUAL_SEQS = 0b0101
+ERROR_CASE         = 0b0111
+ERROR_UNKNOWN      = 0b1111
+
 
 class Seq(object):
     ''' A class to hold the information of a single sequence '''
@@ -48,24 +59,47 @@ class SequenceData(object):
     def load(self, fn):
         ''' Load sequence data from filename *fn* '''
         sequences=[]
+        error = OK
+        arg = ''
+        if not os.path.exists(fn):
+            error = ERROR_FILE_NOT_FOUND
+            arg = fn
+            return error, arg
+        # File can be opened...
+        cnt = 0
         with open(fn) as f:
             while True:
                 hdr = f.readline()
                 if not hdr:
                     break
-                data = f.readline()
-                sequences.append(Seq(hdr, data))
+                cnt+=1
+                try:
+                    data = f.readline()
+                except:
+                    error = ERROR_IO
+                    arg = hdr
+                else:
+                    cnt+=1
+                    try:
+                        sequences.append(Seq(hdr, data))
+                    except ValueError:
+                        error = ERROR_FILE_INVALID
+                        arg = "Offending line: %d"%(cnt+1)
+                        break
+        if not error and not self.are_sequences_of_equal_lengths(sequences):
+            error = ERROR_UNEQUAL_SEQS
         self.sequences = sequences
-        self.check_sequence_lengths()
+        return error, arg
+                
         
-    def check_sequence_lengths(self):
+    def are_sequences_of_equal_lengths(self, sequences):
         ''' Check whether all sequences are equally long.
 
         Raises ValueError if not all sequences are equally long.
         '''
-        l = [s.length for s in self.sequences]
-        if len(set(l))!=1:
-            raise ValueError("Not all sequences are equally long.")
+        l = [s.length for s in sequences]
+        return len(set(l))==1
+
 
     def get_species_info(self):
         ''' get_species_info()

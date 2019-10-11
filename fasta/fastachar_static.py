@@ -2,7 +2,9 @@ ERRORS = {0b0001:'File not found.',
           0b0010:'Invalid or corrupt file.',
           0b0011:'Could not save file.',
           0b0100:'No case data.',
-          0b0101:'Unkwown error.',
+          0b0101:'Not all sequences are of equal length',
+          0b0111:'Case file formatting error',
+          0b1111:'Unkwown error.',
 }
 
 
