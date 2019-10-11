@@ -9,6 +9,8 @@ import xlwt
 class Seq(object):
     ''' A class to hold the information of a single sequence '''
     S = "-?"+"".join([chr(i+65) for i in range(26)])
+    ID = 0
+    
     def __init__(self, hdr, data):
         self.ID, self.species = self.parse_hdr(hdr)
         self.data = data
@@ -25,11 +27,9 @@ class Seq(object):
         #>WBET042_Lyrodus_pedicellatus_Brittany_France
         if hdr[0] != ">":
             raise ValueError("Invalid header/file.")
-        f = hdr[1:].split("_")
-        ID = f[0]
-        species = "_".join(f[1:])
-        
-        return ID, species.strip()
+        Seq.ID += 1
+        species = hdr[1:].strip()
+        return Seq.ID, species
 
     def __repr__(self):
         return "Seq object ({}, {})".format(self.ID, self.species)
@@ -38,71 +38,6 @@ class Seq(object):
     def pretty_print(m,c=" "):
         return c.join(Seq.S[_m] for _m in m)
         
-# class Sequences(object):
-#     def __init__(self):
-#         self.sequences = defaultdict(lambda : [])
-#         self.IDs = defaultdict(lambda : [])
-
-#     def add(self, seq):
-#         ID, species = seq.ID, seq.species
-#         self.sequences[species].append(seq.seq)
-#         self.IDs[species].append(ID)
-
-#     def get_species(self):
-#         return list(self.IDs.keys())
-    
-#     def find_and(self, species):
-#         ''' finds the mutual columns for this species '''
-#         s = self.sequences[species]
-#         M = np.array(s)
-#         # all the same => length of the set of a column must be 1 element.
-#         k = [i  for i, m in enumerate(M.T) if len(set(m))==1]
-#         return k
-
-#     def find_or(self, species):
-#         ''' finds the differences in  columns for this species '''
-#         s = self.sequences[species]
-#         M = np.array(s)
-#         # at least one different: length of set(m) > 1
-#         k = [(i,m)  for i, m in enumerate(M.T) if len(set(m))>1]
-#         return k
-
-#     def find_exclusive(self, A, B):
-#         ''' finds those columns for which holds that 
-#         all entries for A are equal
-#         no entries for B are equal to A's
-#         Should all entries for B be equal too?
-#         '''
-#         # all entries for which A has identical values.
-#         kA = self.find_and(A)
-#         mA = np.array(self.sequences[A])[0]
-#         mB = np.array(self.sequences[B])
-#         k =[(_k,mA[_k], mB[:,_k]) for _k in kA if np.all(mB[:,_k]!=mA[_k])]
-#         return k
-
-#     def find_pure_characters(self, A):
-#         ''' 
-#         * finds the mutual columns for species A -> kA
-#         * the sequence of this species ->mA
-#         * the sequences of the other species mB
-#         * the columns unique to species A ->
-#         * the group of the comparison -> B
-#         '''
-#         kA = self.find_and(A)
-#         mA = np.array(self.sequences[A])[0]
-#         # mB is a matrix size mA x number of sequences not A
-#         mB = np.vstack([np.vstack(v) for k,v in self.sequences.items() if k!=A]).T
-#         # keep the name of all these sequences:
-#         _n = [[k]*len(v) for k,v in self.sequences.items() if k!=A]
-#         B = []
-#         for i in _n:
-#             B+=i
-#         n = mB.shape[1]
-#         v = []
-#         for i in range(mA.shape[0]):
-#             if all(mA[i]!=mB[i]):
-#                 v.append(mB[i])
-#         return kA, mA, mB, v, B
         
 
 class SequenceData(object):
@@ -301,11 +236,11 @@ class Report(object):
         w.write("-"*80+"\n")
         w.write("Set A:\n")
         for i,s in enumerate(set_A):
-            w.write("%2d %s %s\n"%(i+1, s.ID, s.species))
+            w.write("%2d %d %s\n"%(i+1, s.ID, s.species))
         w.write("\n")
         w.write("Set B:\n")
         for i,s in enumerate(set_B):
-            w.write("%2d %s %s\n"%(i+1, s.ID, s.species))
+            w.write("%2d %d %s\n"%(i+1, s.ID, s.species))
         w.write("-"*80+"\n")
         w.write("\n\n")
         if differences_set_A:
@@ -325,6 +260,11 @@ class Report(object):
             for _d in unique_characters_A:
                 w.write("%6d: %s  |  "%(_d[0]+1, Seq.pretty_print([_d[1]])))
                 w.write("%s\n"%(Seq.pretty_print(_d[2])))
+            w.write("-"*80+"\n")
+            a = len(unique_characters_A)
+            b = len(set_A)
+            f = a/b*100
+            w.write("%d of %d characters are unique (%.1f%%)"%(a,b,f))
         else:
             w.write("Set A has no unique characters\n")
         if not w == sys.stdout:
@@ -342,11 +282,11 @@ class Report(object):
         w.write("-"*80+"\n")
         w.write("Set A:\n")
         for i,s in enumerate(set_A):
-            w.write("%2d %s %s\n"%(i+1, s.ID, s.species))
+            w.write("%2d %d %s\n"%(i+1, s.ID, s.species))
         w.write("\n")
         w.write("Set B:\n")
         for i,s in enumerate(set_B):
-            w.write("%2d %s %s\n"%(i+1, s.ID, s.species))
+            w.write("%2d %d %s\n"%(i+1, s.ID, s.species))
         w.write("-"*80+"\n")
         w.write("\n\n")
 
@@ -367,7 +307,7 @@ class Report(object):
             pass
         w = self.output_filename
         if unique_characters_A:
-            w.write("Unique characters of set {}:\n\n".format(set_name))
+            w.write("Characters unique in set {}, but different in other species set:\n\n".format(set_name))
             w.write("column: chr|  characters different in other species\n")
             w.write("           |  ")
             for i in range(len(set_B)):
@@ -377,10 +317,14 @@ class Report(object):
             for _d in unique_characters_A:
                 w.write("%6d: %s  |  "%(_d[0]+1, Seq.pretty_print([_d[1]])))
                 w.write("%s\n"%(Seq.pretty_print(_d[2])))
+            a = len(unique_characters_A)
+            b = len(set_A[0].data)
+            f = a/b*100
+            w.write("\n%d of %d characters are unique (%.1f%%)"%(a,b,f))
         else:
             w.write("{} has no unique characters\n".format(set_name))
 
-    def report_differences_in_set(self, set_name, differences_set):
+    def report_differences_in_set(self, set_name, set_A, differences_set):
         try:
             self.reportxls.report_differences_in_set(set_name, differences_set)
         except IOError:
@@ -389,9 +333,16 @@ class Report(object):
         if differences_set:
             w.write("The differences within {} are:\n\n".format(set_name))
             w.write("column: chars\n")
+            w.write("-"*80)
+            w.write("\n")
             for _d in differences_set:
                 w.write("%6d %s\n"%(_d[0]+1, Seq.pretty_print(_d[1])))
             w.write("\n")
+            a = len(differences_set)
+            b = len(set_A[0].data)
+            f = (b-a)/b*100
+            w.write("\n%d of %d characters are different (%.1f%% unique)"%(a,b,f))
+
         else:
             w.write("All sequences within {} are identical.\n".format(set_name))
             
@@ -437,9 +388,9 @@ class ReportXLS(object):
         n+=1
         for a, b in zip_longest(set_A, set_B):
             if a:
-                self.sheet.write(n, 0, "".join((a.ID, a.species)))
+                self.sheet.write(n, 0, "%s (%d)"%(a.species, a.ID))
             if b:
-                self.sheet.write(n, 1 ,"".join((b.ID, b.species)))
+                self.sheet.write(n, 1 ,"%s (%d)"%(b.species, b.ID))
             n+=1
         self.__row = n
 
@@ -448,7 +399,7 @@ class ReportXLS(object):
     
     def report_uniq_characters(self, set_name, set_A, set_B, unique_characters_A):
         n = self.__row +2
-        self.sheet.write(n, 0, "Unique characters of set {}:\n\n".format(set_name))
+        self.sheet.write(n, 0, "Unique characters of {}:\n\n".format(set_name))
         n+=1
         self.sheet.write(n, 1, "Column")
         self.sheet.write(n, 2, "Character")

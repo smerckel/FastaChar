@@ -234,26 +234,55 @@ class Gui():
         frame_sequences.grid(row=1, column=0, **cnf, **cnfsticky)
         frame_A.grid(row=1, column=1, **cnf, **cnfsticky)
         frame_B.grid(row=1, column=2, **cnf, **cnfsticky)
+
+        frame_sequences.grid_rowconfigure(0,weight=1)
+        frame_sequences.grid_columnconfigure(0,weight=1)
+        frame_A.grid_rowconfigure(0,weight=1)
+        frame_A.grid_columnconfigure(0,weight=1)
+        frame_B.grid_rowconfigure(0,weight=1)
+        frame_B.grid_columnconfigure(0,weight=1)
+        
+        # configure the frames with grid, so that the scrollbars can be placed easily.
+
+        # the scrollbars:    
         sb_sequences = Tk.Scrollbar(frame_sequences, orient=Tk.VERTICAL)
         sb_A = Tk.Scrollbar(frame_A, orient=Tk.VERTICAL)
         sb_B = Tk.Scrollbar(frame_B, orient=Tk.VERTICAL)
-        sb_sequences.pack(side=Tk.RIGHT, fill=Tk.Y)
-        sb_A.pack(side=Tk.RIGHT, fill=Tk.Y)
-        sb_B.pack(side=Tk.RIGHT, fill=Tk.Y)
+        sb_hor_sequences = Tk.Scrollbar(frame_sequences, orient=Tk.HORIZONTAL)
+        sb_hor_A = Tk.Scrollbar(frame_A, orient=Tk.HORIZONTAL)
+        sb_hor_B = Tk.Scrollbar(frame_B, orient=Tk.HORIZONTAL)
+
+        sb_sequences.grid(column=1, row=0, **cnfsticky)
+        sb_A.grid(column=1, row=0, **cnfsticky)
+        sb_B.grid(column=1, row=0, **cnfsticky)
+        sb_hor_sequences.grid(row=1, column=0, **cnfsticky)
+        sb_hor_A.grid(row=1, column=0, **cnfsticky)
+        sb_hor_B.grid(row=1, column=0, **cnfsticky)
         #     define listboxes with scrollbar attached
         cnf_lb=dict(selectmode=Tk.EXTENDED)
-        self.lb_sequences=Tk.Listbox(frame_sequences, yscrollcommand=sb_sequences.set,
+        self.lb_sequences=Tk.Listbox(frame_sequences,
+                                     xscrollcommand=sb_hor_sequences.set,
+                                     yscrollcommand=sb_sequences.set,
                                      **cnf_lb)
-        self.lb_A=Tk.Listbox(frame_A, yscrollcommand=sb_A.set, **cnf_lb)
-        self.lb_B=Tk.Listbox(frame_B, yscrollcommand=sb_B.set, **cnf_lb)
-        #     connect the yview to the scrollbars
+        self.lb_A=Tk.Listbox(frame_A,
+                             xscrollcommand=sb_hor_A.set,
+                             yscrollcommand=sb_A.set,
+                             **cnf_lb)
+        self.lb_B=Tk.Listbox(frame_B,
+                             xscrollcommand=sb_hor_B.set,
+                             yscrollcommand=sb_B.set,
+                             **cnf_lb)
+        #     connect the xview and yview to the scrollbars
         sb_sequences.config(command=self.lb_sequences.yview)
         sb_A.config(command=self.lb_A.yview)
         sb_B.config(command=self.lb_B.yview)
+        sb_hor_sequences.config(command=self.lb_sequences.xview)
+        sb_hor_A.config(command=self.lb_A.xview)
+        sb_hor_B.config(command=self.lb_B.xview)
         #     place the listboxes
-        self.lb_sequences.pack(side=Tk.RIGHT, fill=Tk.BOTH, expand=1)
-        self.lb_A.pack(side=Tk.RIGHT, fill=Tk.BOTH, expand=1)
-        self.lb_B.pack(side=Tk.RIGHT, fill=Tk.BOTH, expand=1)
+        self.lb_sequences.grid(column=0, row=0, **cnfsticky)
+        self.lb_A.grid(column=0, row=0, **cnfsticky)
+        self.lb_B.grid(column=0, row=0, **cnfsticky)
         self.data=dict()
         self.data[self.lb_sequences]=[]
         self.data[self.lb_A]=[]
@@ -283,11 +312,20 @@ class Gui():
         frame_report = Tk.Frame(pady=10)
         frame_report.grid(row=4, column=0, columnspan=3,
                           sticky=Tk.W+Tk.E+Tk.N+Tk.S, padx=10,pady=10)
+        frame_report.grid_rowconfigure(0, weight=1)
+        frame_report.grid_columnconfigure(0, weight=1)
+        
         sb_report = Tk.Scrollbar(frame_report, orient=Tk.VERTICAL)
-        sb_report.pack(side=Tk.RIGHT, fill=Tk.Y)
-        self.report = Tk.Text(frame_report, state=Tk.DISABLED, yscrollcommand=sb_report.set)
-        self.report.pack(side=Tk.RIGHT, fill=Tk.BOTH, expand=1)
+        sb_hor_report = Tk.Scrollbar(frame_report, orient=Tk.HORIZONTAL)
+        sb_report.grid(column=1, row=0, **cnfsticky)
+        sb_hor_report.grid(column=0, row=1, **cnfsticky)
+        self.report = Tk.Text(frame_report, state=Tk.DISABLED,
+                              wrap=None,
+                              yscrollcommand=sb_report.set,
+                              xscrollcommand=sb_hor_report.set)
+        self.report.grid(column=0, row=0, **cnfsticky)
         sb_report.config(command=self.report.yview)
+        sb_hor_report.config(command=self.report.xview)
 
     def create_bindings(self):
         self.dragging=False
@@ -526,7 +564,9 @@ class Gui():
         operation = self.operation_method.get()
         set_A = self.S.select_sequences_from_list(self.data[self.lb_A])
         set_B = self.S.select_sequences_from_list(self.data[self.lb_B])
-        if len(set_A)==0 or len(set_B)==0:
+        if (operation <=2 and (len(set_A)==0 or len(set_B)==0)) or \
+           (operation==3 and len(set_A)==0) or \
+           (operation==4 and len(set_B)==0):
             return
         self.case.clear()
         try:
@@ -559,7 +599,7 @@ class Gui():
         elif operation == 3:
             result = self.S.differences_within_set(set_A)
             report.report_header(set_A, set_B)
-            report.report_differences_in_set("Set A", result)
+            report.report_differences_in_set("Set A", set_A, result)
             report.report_footer()
             self.report.config(state=Tk.NORMAL)
             self.report.insert(Tk.END, memofile.getvalue())
@@ -567,7 +607,7 @@ class Gui():
         elif operation == 4:
             result = self.S.differences_within_set(set_B)
             report.report_header(set_A, set_B)
-            report.report_differences_in_set("Set B", result)
+            report.report_differences_in_set("Set B", set_B, result)
             report.report_footer()
             self.report.config(state=Tk.NORMAL)
             self.report.insert(Tk.END, memofile.getvalue())
