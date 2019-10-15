@@ -375,7 +375,7 @@ class Report(object):
             a = len(differences_set)
             b = len(set_A[0].data)
             f = (b-a)/b*100
-            w.write("\n%d of %d characters are different (%.1f%% unique)"%(a,b,f))
+            w.write("\n%d of %d characters are different (%.1f%% identical)"%(a,b,f))
 
         else:
             w.write("All sequences within {} are identical.\n".format(set_name))
