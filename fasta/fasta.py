@@ -231,7 +231,7 @@ class SequenceData(object):
         return self.comparison_within_set(aset, invert=True)
     
     def compare_sets(self, set_A, set_B, invert=False,
-                       excluded_character_list_set_A='- ?N'.split()):
+                       excluded_character_list_set_A='- ? N'.split()):
         '''Compares set A with set B and list 
             the differences  if not invert
             the agreements if invert
