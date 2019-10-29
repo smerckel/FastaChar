@@ -16,12 +16,18 @@ ERROR_UNEQUAL_SEQS = 0b0101
 ERROR_CASE         = 0b0111
 ERROR_UNKNOWN      = 0b1111
 
+# Regular expression pattern that matches anything that is
+# alphanumeric, with at least one numeral
+reID_alphanum = re.compile("[A-Za-z0-9]+[0-9]+[A-Za-z0-9]*")
+
+# Regular expression pattern that matches anything that is
+# alphanumeric, with at least one numeral. The part up to the numeral can contain any charachter.
+reID_alphanum_alt = re.compile("[A-Za-z0-9_]+[0-9\.]+[A-Za-z0-9]*")
 
 class Seq(object):
     ''' A class to hold the information of a single sequence '''
     S = "-?"+"".join([chr(i+65) for i in range(26)])
-    ID = 0
-    
+    IDcounter = 0
     def __init__(self, hdr, data):
         self.ID, self.species = self.parse_hdr(hdr)
         self.data = data
@@ -36,11 +42,20 @@ class Seq(object):
     def parse_hdr(self, hdr):
         ''' Parse the header string of the sequence '''
         #>WBET042_Lyrodus_pedicellatus_Brittany_France
-        if hdr[0] != ">":
+        if hdr[0] != ">" or len(hdr)==1:
             raise ValueError("Invalid header/file.")
-        Seq.ID += 1
-        species = hdr[1:].strip()
-        return Seq.ID, species
+        # Test whether we have a header with an ID. If not, create one of the form ID001. If yes, strip it from the species name.
+        s = hdr[1:]
+        match = reID_alphanum_alt.match(s)
+        if match:
+            IDstring = match.group()
+            i0, i1 = match.span()
+            species = s[i1+1:].strip()
+        else:
+            IDstring = "ID%0d"%(Seq.IDcounter)
+            Seq.IDcounter += 1
+            species = hdr[1:].strip()
+        return IDstring, species
 
     def __repr__(self):
         return "Seq object ({}, {})".format(self.ID, self.species)
@@ -216,7 +231,7 @@ class SequenceData(object):
         return self.comparison_within_set(aset, invert=True)
     
     def compare_sets(self, set_A, set_B, invert=False,
-                       excluded_character_list_set_A='- ?'.split()):
+                       excluded_character_list_set_A='- ?N'.split()):
         '''Compares set A with set B and list 
             the differences  if not invert
             the agreements if invert
@@ -270,11 +285,11 @@ class Report(object):
         w.write("-"*80+"\n")
         w.write("Set A:\n")
         for i,s in enumerate(set_A):
-            w.write("%2d %d %s\n"%(i+1, s.ID, s.species))
+            w.write("%2d %s (%s)\n"%(i+1, s.species, s.ID))
         w.write("\n")
         w.write("Set B:\n")
         for i,s in enumerate(set_B):
-            w.write("%2d %d %s\n"%(i+1, s.ID, s.species))
+            w.write("%2d %s (%s)\n"%(i+1, s.species, s.ID))
         w.write("-"*80+"\n")
         w.write("\n\n")
         if differences_set_A:
@@ -316,11 +331,11 @@ class Report(object):
         w.write("-"*80+"\n")
         w.write("Set A:\n")
         for i,s in enumerate(set_A):
-            w.write("%2d %d %s\n"%(i+1, s.ID, s.species))
+            w.write("%2d %s (%s)\n"%(i+1, s.species, s.ID))
         w.write("\n")
         w.write("Set B:\n")
         for i,s in enumerate(set_B):
-            w.write("%2d %d %s\n"%(i+1, s.ID, s.species))
+            w.write("%2d %s (%s)\n"%(i+1, s.species, s.ID))
         w.write("-"*80+"\n")
         w.write("\n\n")
 
@@ -422,9 +437,9 @@ class ReportXLS(object):
         n+=1
         for a, b in zip_longest(set_A, set_B):
             if a:
-                self.sheet.write(n, 0, "%s (%d)"%(a.species, a.ID))
+                self.sheet.write(n, 0, "%s (%s)"%(a.species, a.ID))
             if b:
-                self.sheet.write(n, 1 ,"%s (%d)"%(b.species, b.ID))
+                self.sheet.write(n, 1 ,"%s (%s)"%(b.species, b.ID))
             n+=1
         self.__row = n
 
@@ -437,8 +452,9 @@ class ReportXLS(object):
         n+=1
         self.sheet.write(n, 1, "Column")
         self.sheet.write(n, 2, "Character")
-        self.sheet.write(n, 3, "Characters in different in other species")
+        self.sheet.write(n, 3, "Characters different in other species")
         n+=1
+        self.sheet.write(n, 2, set_name)
         for i, v in enumerate(set_B):
             self.sheet.write(n, 3+i, "%d"%(i+1))
         n+=1

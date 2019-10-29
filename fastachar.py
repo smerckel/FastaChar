@@ -574,7 +574,7 @@ class Gui():
         report = fasta.Report(self.fasta_file, output_filename=memofile, reportxls = self.reportxls)
         
         if operation == 1:
-            result = self.S.compare_sets(set_A, set_B)
+            result = self.S.compare_sets(set_A, set_B, excluded_character_list_set_A=' ?N'.split())
             report.report_header(set_A, set_B)
             report.report_uniq_characters("Set A", set_A, set_B, result)
             report.report_footer()
@@ -582,7 +582,7 @@ class Gui():
             self.report.insert(Tk.END, memofile.getvalue())
             self.report.config(state=Tk.DISABLED)
         elif operation == 2:
-            result = self.S.compare_sets(set_B, set_A)
+            result = self.S.compare_sets(set_B, set_Aexcluded_character_list_set_A=' ?N'.split())
             report.report_header(set_A, set_B)
             report.report_uniq_characters("Set B", set_B, set_A, result)
             report.report_footer()
