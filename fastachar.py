@@ -582,7 +582,7 @@ class Gui():
             self.report.insert(Tk.END, memofile.getvalue())
             self.report.config(state=Tk.DISABLED)
         elif operation == 2:
-            result = self.S.compare_sets(set_B, set_Aexcluded_character_list_set_A='? N'.split())
+            result = self.S.compare_sets(set_B, excluded_character_list_set_A='? N'.split())
             report.report_header(set_A, set_B)
             report.report_uniq_characters("Set B", set_B, set_A, result)
             report.report_footer()
