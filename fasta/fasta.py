@@ -311,7 +311,7 @@ class Report(object):
                 w.write("%s\n"%(Seq.pretty_print(_d[2])))
             w.write("-"*80+"\n")
             a = len(unique_characters_A)
-            b = len(set_A)
+            b = len(set_A[0].seq)
             f = a/b*100
             w.write("%d of %d characters are unique (%.1f%%)"%(a,b,f))
         else:
