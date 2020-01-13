@@ -1,11 +1,11 @@
 from setuptools import setup
 
 setup(name="fastachar",
-      version="0.0.1",
+      version="0.0.2",
       packages = ['fasta'],
-      py_modules = ['fastachar'],
-      entry_points = {'console_scripts':[],#['fastachar_gui = fastachar_gui:main'],
-                      'gui_scripts':['fastachar = fastachar:main']
+      py_modules = [],
+      entry_points = {'console_scripts':['hw = fasta.tkgui:test'],
+                      'gui_scripts':['fastachar = fasta.tkgui:main']
                       },
       install_requires = 'numpy xlwt'.split(),
       author="Lucas Merckelbach",

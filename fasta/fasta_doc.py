@@ -198,3 +198,37 @@ This works identical for making a selection to move species from the
 list "species" to set A, or back, or between set A and B.
 
 """
+
+REGEX_HELP_TEXT = """\
+
+The sequence data in an aligned fasta file are assumed to be grouped
+in two lines of data: a line indicative of the species and an
+identifier, and a line containing the sequence characters. In the
+fields below the format of the header can be precisely formatted. Note
+that within a single alignment the header format should be consistent
+for all entries.
+
+
+Header format: This prescribes the global format of the header and
+consists of the strings '{ID}' and '{SPECIES}', where {ID} and {SPECIES}
+are placeholders for the identifier and species text strings,
+respectively.
+
+Example.
+
+Suppose the header is given by 'WBT001 Lyrodus pediciliatus', then the
+first word refers to an ID and the rest of the string refers to the
+species. In this case the header format would be '{ID} {SPECIES}',
+that is, the header consists of a ID string, and a species string
+separated by a space. (Note the curly braces.)
+
+
+The strings {ID} and {SPECIES} are subsitituted by regular
+expressions. Sticking with the example above, IDs are given by
+captialised letters and digits, and the species names consists of
+letters and spaces. Then the regular exprresion for the ID becomes
+'[A-Z0-9]+', and for the species names '[A-Z][a-z ]+'.
+
+Many websites provide further information on how to use regular expressions.
+
+"""

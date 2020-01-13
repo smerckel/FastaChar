@@ -1,3 +1,4 @@
+from functools import partial
 import os
 from io import StringIO
 from sys import platform
@@ -8,8 +9,8 @@ import tkinter.ttk as ttk
 
 import configparser
 
-from fasta import fasta
-from fasta import fastachar_static
+from . import fasta_logic, fasta_io, fasta_doc
+
 
 CONFIG = dict(linux = dict(INIFILE = 'fastacharrc',
                            INIPATH = '.config/fastachar'),
@@ -17,11 +18,22 @@ CONFIG = dict(linux = dict(INIFILE = 'fastacharrc',
                            INIPATH ='.fastachar'))
 
 class ConfigFastachar(object):
+    ''' Class to contain the configuration of the Fastachar gui
+
+    '''
     def __init__(self):
         self.config = configparser.ConfigParser()
         self.load()
         
     def get_home(self):
+        ''' Return the home directory
+
+        Return
+        ======
+        
+        home_dir: string
+
+        '''
         if platform == 'linux':
             home_dir = os.getenv('HOME')
         elif platform == 'win32':
@@ -32,6 +44,12 @@ class ConfigFastachar(object):
         return home_dir
     
     def get_path(self):
+        ''' Return the full path to the configuration file.
+        
+        Returns
+        -------
+        path : string
+        '''
         home_dir = self.get_home()
         path = os.path.join(home_dir,
                             CONFIG[platform]['INIPATH'])
@@ -40,14 +58,24 @@ class ConfigFastachar(object):
                             CONFIG[platform]['INIFILE'])
 
     def set_defaults(self):
+        ''' Sets the default values for the configuration file
+        
+        '''
         default_cwd = self.get_home()
         if not os.path.exists(default_cwd):
             default_cwd = os.getcwd()
         self.config['DEFAULT'] = dict(working_directory=default_cwd)
-        
-        
+        self.config['REGEX'] = dict(HEADER_FORMAT = '{ID} {SPECIES}',
+                                    ID = '[A-Za-z0-9\._]+',
+                                    SPECIES = '[A-Z][a-z ]+')
     
     def load(self):
+        ''' Load and parse configuration file
+        
+        Upon calling this method, the configuration dictionary self.config gets
+        populated.
+
+        '''
         p = self.get_path()
         cfg_file = self.config.read(p)
         if not cfg_file:
@@ -64,6 +92,10 @@ class ConfigFastachar(object):
                     self.config['DEFAULT'] = dict(working_directory=cwd)
 
     def save(self):
+        ''' Save the the current configuration to file.
+
+        This method writes self.config to file.
+        '''
         p = self.get_path()
         with open(p, 'w') as fp:
             self.config.write(fp)
@@ -83,12 +115,18 @@ class Case(object):
                  species,
                  setA,
                  setB,
-                 operation):
+                 operation,
+                 regex_header_format,
+                 regex_id,
+                 regex_species):
         self.data = dict(filename=filename,
                          species=species,
                          setA=setA,
                          setB=setB,
-                         operation=operation)
+                         operation=operation,
+                         regex_header_format=regex_header_format,
+                         regex_id=regex_id,
+                         regex_species=regex_species)
 
     def parse_line(self, line):
         kwd, value = line.split("=")
@@ -105,18 +143,20 @@ class Case(object):
             arg = filename
             return error, arg
         # file exists, now open it.
-        error = fasta.OK
+        error = fasta_io.OK
         arg = ''
+        lineno = 0
         with open(filename,'r') as fp:
             while True:
                 line = fp.readline()
+                lineno+=1
                 if not line:
                     break
                 try:
                     kwd, value = self.parse_line(line)
                 except ValueError:
-                    error = fasta.ERROR_CASE
-                    arg = line
+                    error = fasta_io.ERROR_CASE
+                    arg = "{} (line no: {}".format(line, lineno)
                 else:
                     self.data[kwd]=value
         return error, arg
@@ -128,6 +168,9 @@ class Case(object):
             fp.write("setA = {}\n".format(" , ".join(self.data['setA'])))
             fp.write("setB = {}\n".format(" , ".join(self.data['setB'])))
             fp.write("operation = {}\n".format(self.data['operation']))
+            fp.write("regex_header_format = {}\n".format(self.data['regex_header_format']))
+            fp.write("regex_id = {}\n".format(self.data['regex_id']))
+            fp.write("regex_species = {}\n".format(self.data['regex_species']))
         
 
 class Gui():
@@ -136,9 +179,12 @@ class Gui():
         self.root.wm_title('Fastachar')
         self.config = ConfigFastachar()
         self.cwd = self.getcwd()
-        self.S = fasta.SequenceData()
+        self.alignment = fasta_io.Alignment()
+        self.alignment.set_regular_expressions(self.config.config['REGEX']['HEADER_FORMAT'],
+                                               self.config.config['REGEX']['ID'],
+                                               self.config.config['REGEX']['SPECIES'])
         self.case = Case()
-        self.reportxls = fasta.ReportXLS()
+        self.reportxls = fasta_io.ReportXLS()
 
     def getcwd(self):
         cwd = self.config.config['DEFAULT']['working_directory']
@@ -146,13 +192,65 @@ class Gui():
 
     def setcwd(self,cwd):
         self.config.config['DEFAULT']['working_directory'] = cwd
-      
+
+    def cb_set_regex(self):
+        cnf = dict(ipadx=10, ipady=10, padx=10, pady=0)
+        cnfsticky = dict(sticky=Tk.N+Tk.E+Tk.S+Tk.W)
+        toplevel = Tk.Toplevel()
+        frame = Tk.Frame(toplevel)
+        Tk.Label(frame, text="Header format: ").grid(row=0, column=0, **cnf)
+        Tk.Label(frame, text="Regex ID: ").grid(row=1, column=0, **cnf)
+        Tk.Label(frame, text="Regex SPECIES: ").grid(row=2, column=0, **cnf)
+        v = []
+        for i, k in enumerate("HEADER ID SPECIES".split()):
+            v.append(Tk.StringVar())
+            v[i].set(self.alignment.pattern_dict[k])
+            Tk.Entry(frame, textvariable=v[i]).grid(row=i, column=1, **cnf)
+        bottom_frame = Tk.Frame(toplevel)
+
+        bt = Tk.Button(bottom_frame, text="Close", command=partial(self.cb_close_regex, toplevel, v))
+        bt_cancel = Tk.Button(bottom_frame, text="Cancel", command=toplevel.destroy)
+        bt_help = Tk.Button(bottom_frame, text="Help", command=self.regex_help_window)
+        bt.pack(side=Tk.LEFT)
+        bt_cancel.pack(side=Tk.LEFT)
+        bt_help.pack(side=Tk.RIGHT)
+        #
+        frame.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1, **cnf)
+        bottom_frame.pack(side=Tk.BOTTOM, **cnf)
+        toplevel.focus_force()
+
+    def cb_close_regex(self,window, v):
+        # update the regular expressions used in the alignment.
+        self.alignment.set_regular_expressions(*[_v.get() for _v in v])
+        self.config.config['REGEX']['header_format'] = v[0].get()
+        self.config.config['REGEX']['id'] = v[1].get()
+        self.config.config['REGEX']['species'] = v[2].get()
+        window.destroy()
+        
+    def regex_help_window(self):
+        toplevel = Tk.Toplevel()
+        frame = Tk.Frame(toplevel)
+        frame.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+        sb_report = Tk.Scrollbar(frame, orient=Tk.VERTICAL)
+        sb_report.pack(side=Tk.RIGHT, fill=Tk.Y)
+        report = Tk.Text(frame, state=Tk.DISABLED,
+                         padx=10, pady=10, yscrollcommand=sb_report.set)
+        report.pack(side=Tk.RIGHT, fill=Tk.BOTH, expand=1)
+        sb_report.config(command=report.yview)
+        bt = Tk.Button(toplevel, text="Close", command=toplevel.destroy)
+        bt.pack(side=Tk.BOTTOM)
+        report.config(state=Tk.NORMAL)
+        for line in fasta_doc.REGEX_HELP_TEXT.split("\n"):
+            report.insert(Tk.END, "{}\n".format(line))
+        report.config(state=Tk.DISABLED)
+        toplevel.focus_force()
+        
     def about_window(self):
         toplevel = Tk.Toplevel()
-        label1 = Tk.Label(toplevel, text=fastachar_static.ABOUT_TEXT, height=0, width=100,
+        label1 = Tk.Label(toplevel, text=fasta_doc.ABOUT_TEXT, height=0, width=100,
                           justify=Tk.LEFT)
         label1.pack()
-        label2 = Tk.Label(toplevel, text=fastachar_static.DISCLAIMER, height=0, width=100,
+        label2 = Tk.Label(toplevel, text=fasta_doc.DISCLAIMER, height=0, width=100,
                           justify=Tk.LEFT)
         label2.pack()
         bt = Tk.Button(toplevel, text="Close", command=toplevel.destroy)
@@ -162,11 +260,11 @@ class Gui():
     def error_window(self, err_code, arg = ''):
         toplevel = Tk.Toplevel()
         if arg:
-            text = " : ".join([fastachar_static.ERRORS[err_code], arg])
+            text = " : ".join([fasta_doc.ERRORS[err_code], arg])
         else:
-            text = fastachar_static.ERRORS[err_code]
+            text = fasta_doc.ERRORS[err_code]
         label1 = Tk.Label(toplevel, text=text,
-                          height=0, width=len(text), padx=10, pady=10,
+                          height=0, width=80, padx=10, pady=10,
                           justify=Tk.LEFT)
         label1.pack()
         bt = Tk.Button(toplevel, text="Close", padx=10, pady=10,
@@ -188,7 +286,7 @@ class Gui():
         bt = Tk.Button(toplevel, text="Close", command=toplevel.destroy)
         bt.pack(side=Tk.BOTTOM)
         report.config(state=Tk.NORMAL)
-        for line in fastachar_static.HELP_TEXT.split("\n"):
+        for line in fasta_doc.HELP_TEXT.split("\n"):
             report.insert(Tk.END, "{}\n".format(line))
         report.config(state=Tk.DISABLED)
         toplevel.focus_force()
@@ -201,6 +299,8 @@ class Gui():
         filemenu.add_command(label="Open fasta file", command=self.cb_open_fasta_file)
         filemenu.add_command(label="Open case file", command=self.cb_open_case_file)
         filemenu.add_command(label="Save case file", command=self.cb_save_case_file)
+        filemenu.add_separator()
+        filemenu.add_command(label="Set Regular expressions", command=self.cb_set_regex)
         filemenu.add_separator()
         filemenu.add_command(label="Set working directory", command=self.cb_set_working_dir)
         filemenu.add_separator()
@@ -301,12 +401,8 @@ class Gui():
         self.operation_method.set(1)
         Tk.Radiobutton(frame, text="Unique characters A",
                        variable=self.operation_method, value=1).pack(anchor=Tk.W)
-        Tk.Radiobutton(frame, text="Unique characters B",
-                       variable=self.operation_method, value=2).pack(anchor=Tk.W)
         Tk.Radiobutton(frame, text="Differences within A",
-                       variable=self.operation_method, value=3).pack(anchor=Tk.W)
-        Tk.Radiobutton(frame, text="Differences within B",
-                       variable=self.operation_method, value=4).pack(anchor=Tk.W)
+                       variable=self.operation_method, value=2).pack(anchor=Tk.W)
 
         bt_run = Tk.Button(root, text="Process", command=self.cb_run)
         bt_run.grid(row=3, column=1, **cnf)
@@ -397,7 +493,7 @@ class Gui():
                                                      parent=self.root,
                                                      title="Open fasta file")
         r,arg = self.open_fasta_file()
-        if r != fasta.OK:
+        if r != fasta_io.OK:
             if arg:
                 arg += " (%s)"%(self.fasta_file)
             else:
@@ -415,19 +511,21 @@ class Gui():
                                                title="Open case file")
         if case_file:
             r, arg = self.open_case_file(case_file)
-            if r != fasta.OK:
+            if r != fasta_io.OK:
                 self.error_window(r, arg=case_file)
         # else ignore silently
 
         
     def open_fasta_file(self):
+        error = fasta_io.OK
+        arg = ''
         if self.fasta_file:
-            error, arg = self.S.load(self.fasta_file)
-            if error == fasta.OK:
+            error, arg = self.alignment.load(self.fasta_file)
+            if error == fasta_io.OK:
                 try:
-                    species = self.S.get_species_list()
+                    species = self.alignment.get_species_list()
                 except:
-                    error = fasta.ERROR_FILE_INVALID
+                    error = fasta_io.ERROR_FILE_INVALID
                     arg = ''
                 else:
                     species.sort()
@@ -440,13 +538,20 @@ class Gui():
         return error, arg
     
     def open_case_file(self, case_file):
-        error = fasta.OK
+        error = fasta_io.OK
+        arg=''
         if case_file:
             error, arg = self.case.load(case_file)
-            if error == fasta.OK:
+            if error == fasta_io.OK:
                 self.fasta_file = self.case.data['filename']
-                error, arg = self.S.load(self.fasta_file)
-                if error == fasta.OK:
+
+                regex_header_format = self.case.data['regex_header_format']
+                regex_id = self.case.data['regex_id']
+                regex_species = self.case.data['regex_species']
+                self.alignment.set_regular_expressions(regex_header_format, regex_id, regex_species)
+                
+                error, arg = self.alignment.load(self.fasta_file)
+                if error == fasta_io.OK:
                     self.data[self.lb_sequences] = self.case.data["species"]
                     self.populate_list_with_items(self.case.data["species"],
                                                   self.lb_sequences, delete_all=True)
@@ -457,6 +562,7 @@ class Gui():
                     self.populate_list_with_items(self.case.data["setB"],
                                                   self.lb_B, delete_all=True)
                     self.operation_method.set(self.case.data["operation"])
+
         return error, arg
 
     def cb_set_working_dir(self):
@@ -464,7 +570,7 @@ class Gui():
         self.setcwd(self.cwd)
         
     def cb_save_case_file(self):
-        error = fasta.OK
+        error = fasta_io.OK
         if self.case.data:
             case_file = filedialog.asksaveasfilename(defaultextension=".fc",
                                                      filetypes=[('case files', '.fc'), ('all files', '.*')],
@@ -477,14 +583,14 @@ class Gui():
                 try:
                     self.case.save(case_file)
                 except IOError:
-                    error = fasta.ERROR_IO
+                    error = fasta_io.ERROR_IO
                     arg = case_file
             else:
                 return # cancel clicked. Ignore silently.    
         else:
-            error = fasta.ERROR_NO_CASE_DATA
+            error = fasta_io.ERROR_NO_CASE_DATA
             arg = ''
-        if error != fasta.OK:
+        if error != fasta_io.OK:
             self.error_window(error, arg)
             
     def cb_about(self):
@@ -494,7 +600,7 @@ class Gui():
         self.help_window()
     
     def cb_save_report(self):
-        error = fasta.OK
+        error = fasta_io.OK
         out_file = filedialog.asksaveasfilename(defaultextension=".txt",
                                                 filetypes=[('text files', '.txt'), ('all files', '.*')],
                                                 initialdir=self.cwd,
@@ -508,19 +614,19 @@ class Gui():
             with open(out_file,'w') as fp:
                 fp.write(self.report.get(1., Tk.END))
         except FileNotFoundError:
-            error = fasta.ERROR_FILE_NOT_FOUND
+            error = fasta_io.ERROR_FILE_NOT_FOUND
             arg = out_file
         except IOError:
-            error = fasta.ERROR_IO
+            error = fasta_io.ERROR_IO
             arg = out_file
         except:
-            error = fasta.ERROR_UNKNOWN
+            error = fasta_io.ERROR_UNKNOWN
             arg = out_file
-        if error != fasta.OK:
+        if error != fasta_io.OK:
             self.error_window(error, arg)
 
     def cb_save_report_xls(self):
-        error = fasta.OK
+        error = fasta_io.OK
         out_file = filedialog.asksaveasfilename(defaultextension=".xls",
                                                 filetypes=[('xls files', '.xls'), ('all files', '.*')],
                                                 initialdir=self.cwd,
@@ -534,15 +640,15 @@ class Gui():
         try:
             self.reportxls.save(out_file)
         except FileNotFoundError:
-            error = fasta.ERROR_FILE_NOT_FOUND
+            error = fasta_io.ERROR_FILE_NOT_FOUND
             arg = out_file
         except IOError:
-            error = fasta.ERROR_IO
+            error = fasta_io.ERROR_IO
             arg = out_file
         except:
-            error = fasta.ERROR_UNKNOWN
+            error = fasta_io.ERROR_UNKNOWN
             arg = out_file
-        if error != fasta.OK:
+        if error != fasta_io.OK:
             self.error_window(error, arg)
 
             
@@ -555,11 +661,10 @@ class Gui():
         
     def cb_run(self):
         operation = self.operation_method.get()
-        set_A = self.S.select_sequences_from_list(self.data[self.lb_A])
-        set_B = self.S.select_sequences_from_list(self.data[self.lb_B])
-        if (operation <=2 and (len(set_A)==0 or len(set_B)==0)) or \
-           (operation==3 and len(set_A)==0) or \
-           (operation==4 and len(set_B)==0):
+        set_A = self.alignment.select_sequences_from_list(self.data[self.lb_A])
+        set_B = self.alignment.select_sequences_from_list(self.data[self.lb_B])
+        if (operation==1 and (len(set_A)==0 or len(set_B)==0)) or \
+           (operation==2 and len(set_A)==0):
             return
         self.case.clear()
         try:
@@ -567,14 +672,19 @@ class Gui():
                                self.data[self.lb_sequences],
                                self.data[self.lb_A],
                                self.data[self.lb_B],
-                               operation)
+                               operation,
+                               self.alignment.pattern_dict['HEADER'],
+                               self.alignment.pattern_dict['ID'],
+                               self.alignment.pattern_dict['SPECIES'])
         except AttributeError:
             return
         memofile = StringIO()
-        report = fasta.Report(self.fasta_file, output_filename=memofile, reportxls = self.reportxls)
+        report = fasta_io.Report(self.fasta_file, output_filename=memofile, reportxls = self.reportxls)
+
+        logic = fasta_logic.SequenceLogic()
         
         if operation == 1:
-            result = self.S.compare_sets(set_A, set_B, excluded_character_list_set_A='? N'.split())
+            result = logic.compare_sets(set_A, set_B)
             report.report_header(set_A, set_B)
             report.report_uniq_characters("Set A", set_A, set_B, result)
             report.report_footer()
@@ -582,25 +692,9 @@ class Gui():
             self.report.insert(Tk.END, memofile.getvalue())
             self.report.config(state=Tk.DISABLED)
         elif operation == 2:
-            result = self.S.compare_sets(set_B, excluded_character_list_set_A='? N'.split())
-            report.report_header(set_A, set_B)
-            report.report_uniq_characters("Set B", set_B, set_A, result)
-            report.report_footer()
-            self.report.config(state=Tk.NORMAL)
-            self.report.insert(Tk.END, memofile.getvalue())
-            self.report.config(state=Tk.DISABLED)
-        elif operation == 3:
-            result = self.S.differences_within_set(set_A)
-            report.report_header(set_A, set_B)
+            result = logic.differences_within_set(set_A)
+            report.report_header(set_A, [])
             report.report_differences_in_set("Set A", set_A, result)
-            report.report_footer()
-            self.report.config(state=Tk.NORMAL)
-            self.report.insert(Tk.END, memofile.getvalue())
-            self.report.config(state=Tk.DISABLED)
-        elif operation == 4:
-            result = self.S.differences_within_set(set_B)
-            report.report_header(set_A, set_B)
-            report.report_differences_in_set("Set B", set_B, result)
             report.report_footer()
             self.report.config(state=Tk.NORMAL)
             self.report.insert(Tk.END, memofile.getvalue())
@@ -618,3 +712,5 @@ def main():
 
 
 
+def test():
+    print("hello world")
