@@ -180,9 +180,12 @@ class Gui():
         self.config = ConfigFastachar()
         self.cwd = self.getcwd()
         self.alignment = fasta_io.Alignment()
-        self.alignment.set_regular_expressions(self.config.config['REGEX']['HEADER_FORMAT'],
-                                               self.config.config['REGEX']['ID'],
-                                               self.config.config['REGEX']['SPECIES'])
+        try:
+            self.alignment.set_fasta_hdr_fmt(self.config.config['REGEX']['HEADER_FORMAT'],
+                                             self.config.config['REGEX']['ID'],
+                                             self.config.config['REGEX']['SPECIES'])
+        except KeyError:
+            pass # use default setting
         self.case = Case()
         self.reportxls = fasta_io.ReportXLS()
 
@@ -221,7 +224,7 @@ class Gui():
 
     def cb_close_regex(self,window, v):
         # update the regular expressions used in the alignment.
-        self.alignment.set_regular_expressions(*[_v.get() for _v in v])
+        self.alignment.set_fasta_hdr_fmt(*[_v.get() for _v in v])
         self.config.config['REGEX']['header_format'] = v[0].get()
         self.config.config['REGEX']['id'] = v[1].get()
         self.config.config['REGEX']['species'] = v[2].get()
@@ -548,7 +551,7 @@ class Gui():
                 regex_header_format = self.case.data['regex_header_format']
                 regex_id = self.case.data['regex_id']
                 regex_species = self.case.data['regex_species']
-                self.alignment.set_regular_expressions(regex_header_format, regex_id, regex_species)
+                self.alignment.set_fasta_hdr_fmt(regex_header_format, regex_id, regex_species)
                 
                 error, arg = self.alignment.load(self.fasta_file)
                 if error == fasta_io.OK:

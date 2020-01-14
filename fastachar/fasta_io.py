@@ -23,11 +23,11 @@ class Alignment(object):
     ''' Class to hold sequences '''
     def __init__(self):
         self.sequences = []
-        self.set_regular_expressions()
+        self.set_fasta_hdr_fmt()
         
-    def set_regular_expressions(self,header_format = "{ID}[_ ]{SPECIES}",
-                                IDregex = "[A-Za-z0-9_]+[0-9\.]+[A-Za-z0-9]*",
-                                SPECIESregex="[A-Za-z_]+"):
+    def set_fasta_hdr_fmt(self,header_format = "{ID}[_ ]{SPECIES}",
+                          IDregex = "[A-Za-z0-9_]+[0-9\.]+[A-Za-z0-9]*",
+                          SPECIESregex="[A-Za-z_]+"):
         self.pattern_dict = dict(ID=IDregex, SPECIES=SPECIESregex, HEADER=header_format,
                                  SEP=header_format.replace("{ID}","").replace("{SPECIES}",""))
         self.regex_dict=dict(header=re.compile(header_format.format(**self.pattern_dict)),
@@ -129,13 +129,35 @@ class Alignment(object):
         return k
 
     def select_sequences(self, regex, invert = False, exclude=None):
-        ''' select_sequences(regex, invert):
+        '''select_sequences using regular expressions
 
-        regex: a regular expression or exact string
-        invert: if True, the inverted selection is returned (not matching species)
-        exclude: None or a regular expression to exclude these.
+        Parameters
+        ----------
 
-        returns a list with selected sequences.
+        regex: string
+            a regular expression or exact string to match the species names
+        
+        invert: bool
+            if True, the inverted selection is returned (not matching species)
+
+        exclude: None or a regular expression
+            exclude the matches that are included by the regex parameter.
+
+        RETURNS
+        -------
+
+        The methode returns a list with selected sequences.
+
+        This method can be used to select a set of species using
+        regular expressions. All species are returned that match the
+        spefified regex, or all except these if invert is set to
+        True. An optional exlude regex can be given to filter the list
+        further. This will affect the behaviour of the invert option,
+        see the note below.
+
+        Note :: If an expression is given for the exlude parameter and
+        invert==True, then those sequences that match the regex
+        selection AND the exclude selection is returned.
         '''
         c = re.compile(regex)
         if not exclude:
@@ -146,7 +168,7 @@ class Alignment(object):
         else:
             x = re.compile(exclude)
             if invert:
-                group = [i for i in self.sequences if not c.match(i.species) or x.match(i.species)]
+                group = [i for i in self.sequences if c.match(i.species) and x.match(i.species)]
             else:
                 group = [i for i in self.sequences if c.match(i.species) and not x.match(i.species)]
             
