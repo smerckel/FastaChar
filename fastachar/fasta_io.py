@@ -307,17 +307,26 @@ class Report(object):
             pass
         w = self.output_filename
         if differences_set:
+            count=0
             w.write("The differences within {} are:\n\n".format(set_name))
-            w.write("column: chars\n")
+            w.write("column:  chars\n")
             w.write("-"*80)
             w.write("\n")
             for j, state_a in differences_set:
-                w.write("%6d %s\n"%(j+1, " ".join(state_a._value)))
+                if len(state_a.intersection_of_subsets())==1:
+                    prefix='*'
+                    count+=1
+                else:
+                    prefix=' '
+                w.write("%s%5d %s\n"%(prefix,j+1, " ".join(state_a._value)))
             w.write("\n")
             a = len(differences_set)
             b = len(set_A[0].data)
             f = (b-a)/b*100
-            w.write("\n%d of %d characters are different (%.1f%% identical)"%(a,b,f))
+            w.write("\nSummary")
+            w.write("\n\t- %d of %d characters are different (%.1f%% identical)."%(a,b,f))
+            if count:
+                w.write("\n\n\t - A number of %d instances (marked by *) were found \n\t  that *could* be potential unique.\n"%(count))
 
         else:
             w.write("All sequences within {} are identical.\n".format(set_name))

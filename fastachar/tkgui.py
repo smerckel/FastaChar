@@ -74,7 +74,7 @@ class ConfigFastachar(object):
             self.config.set('DEFAULT', 'working_directory', default_cwd)
         elif section == 'REGEX':
             self.config.set('REGEX', 'header_format','{ID} {SPECIES}')
-            self.config.set('REGEX', 'id ','[A-Za-z0-9\._]+')
+            self.config.set('REGEX', 'id','[A-Za-z0-9\._]+')
             self.config.set('REGEX', 'species', '[A-Z][a-z ]+')
     
     def load(self):
@@ -206,6 +206,31 @@ class Gui():
     def setcwd(self,cwd):
         self.config.config['DEFAULT']['working_directory'] = cwd
 
+    def cb_open_fasta_file_for_hdr(self, parent):
+        self.fasta_file = filedialog.askopenfilename(defaultextension=".fas",
+                                                     filetypes=[('fasta files', '.fas'), ('all files', '.*')],
+                                                     initialdir=self.cwd,
+                                                     #initialfile,
+                                                     multiple=False,
+                                                     #message,
+                                                     parent=parent,
+                                                     title="Open fasta file")
+        lines=[]
+        i=0
+        if self.fasta_file:
+            with open(self.fasta_file, 'r') as fp:
+                while True:
+                    l = fp.readline()
+                    if l and l.strip().startswith('>'):
+                        i+=1
+                        s = "{:2d} {}".format(i, l.rstrip()[1:])
+                        lines.append(s)
+                    if not l:
+                        break
+        if lines:
+            self.cb_open_text_window(lines)
+
+        
     def cb_set_regex(self):
         cnf = dict(ipadx=10, ipady=10, padx=10, pady=0)
         cnfsticky = dict(sticky=Tk.N+Tk.E+Tk.S+Tk.W)
@@ -223,9 +248,14 @@ class Gui():
 
         bt = Tk.Button(bottom_frame, text="OK", command=partial(self.cb_close_regex, toplevel, v))
         bt_cancel = Tk.Button(bottom_frame, text="Cancel", command=toplevel.destroy)
-        bt_help = Tk.Button(bottom_frame, text="Help", command=self.regex_help_window)
+        bt_open = Tk.Button(bottom_frame, text="Open file",
+                            command=partial(self.cb_open_fasta_file_for_hdr, toplevel))
+        help_lines = fasta_doc.REGEX_HELP_TEXT.split("\n")
+        bt_help = Tk.Button(bottom_frame, text="Help",
+                            command=partial(self.cb_open_text_window, help_lines))
         bt.pack(side=Tk.LEFT)
         bt_cancel.pack(side=Tk.LEFT)
+        bt_open.pack(side=Tk.LEFT)
         bt_help.pack(side=Tk.RIGHT)
         #
         frame.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1, **cnf)
@@ -240,7 +270,7 @@ class Gui():
         self.config.config['REGEX']['species'] = v[2].get()
         window.destroy()
         
-    def regex_help_window(self):
+    def cb_open_text_window(self, lines):
         toplevel = Tk.Toplevel()
         frame = Tk.Frame(toplevel)
         frame.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
@@ -253,7 +283,7 @@ class Gui():
         bt = Tk.Button(toplevel, text="Close", command=toplevel.destroy)
         bt.pack(side=Tk.BOTTOM)
         report.config(state=Tk.NORMAL)
-        for line in fasta_doc.REGEX_HELP_TEXT.split("\n"):
+        for line in lines:
             report.insert(Tk.END, "{}\n".format(line))
         report.config(state=Tk.DISABLED)
         toplevel.focus_force()

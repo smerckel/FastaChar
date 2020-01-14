@@ -18,13 +18,18 @@ class State(set):
     def __init__(self, chars):
         super().__init__()
         self._value = []
+        self._chars = []
         for _char in chars:
             self.update(_char)
 
     def update(self, s):
         self._value.append(s._value)
+        self._chars.append(s)
         super().update(s)
 
+    def intersection_of_subsets(self):
+        return set.intersection(*self._chars)
+    
     def __repr__(self):
         m = "{} ({})".format(super().__repr__(), "".join(self._value))
         return m
