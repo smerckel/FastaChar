@@ -57,17 +57,25 @@ class ConfigFastachar(object):
         return os.path.join(path, 
                             CONFIG[platform]['INIFILE'])
 
-    def set_defaults(self):
+    def set_defaults(self, section, **p):
         ''' Sets the default values for the configuration file
         
         '''
-        default_cwd = self.get_home()
-        if not os.path.exists(default_cwd):
-            default_cwd = os.getcwd()
-        self.config['DEFAULT'] = dict(working_directory=default_cwd)
-        self.config['REGEX'] = dict(HEADER_FORMAT = '{ID} {SPECIES}',
-                                    ID = '[A-Za-z0-9\._]+',
-                                    SPECIES = '[A-Z][a-z ]+')
+        if not self.config.has_section(section):
+            self.config.add_section(section)
+        if section == 'DEFAULT':
+            try:
+                wd = p['working_directory']
+            except KeyError:
+                wd = None
+            default_cwd = wd or self.get_home()
+            if not os.path.exists(default_cwd):
+                default_cwd = os.getcwd()
+            self.config.set('DEFAULT', 'working_directory', default_cwd)
+        elif section == 'REGEX':
+            self.config.set('REGEX', 'header_format','{ID} {SPECIES}')
+            self.config.set('REGEX', 'id ','[A-Za-z0-9\._]+')
+            self.config.set('REGEX', 'species', '[A-Z][a-z ]+')
     
     def load(self):
         ''' Load and parse configuration file
@@ -82,14 +90,16 @@ class ConfigFastachar(object):
             self.set_defaults()
         else:
             try:
-                cwd = self.config['DEFAULT']['working_directory']
-            except KeyError:
-                self.set_defaults()
+                cwd = self.config.get('DEFAULT','working_directory')
+            except configparser.NoSectionError:
+                self.set_defaults('DEFAULT')
             else:
                 if not os.path.exists(cwd):
-                    self.set_defaults()
-                else:
-                    self.config['DEFAULT'] = dict(working_directory=cwd)
+                    self.set_defaults('DEFAULT')
+            try:
+                self.config.get('REGEX','id')
+            except configparser.NoSectionError:
+                self.set_defaults('REGEX')
 
     def save(self):
         ''' Save the the current configuration to file.
@@ -181,9 +191,9 @@ class Gui():
         self.cwd = self.getcwd()
         self.alignment = fasta_io.Alignment()
         try:
-            self.alignment.set_fasta_hdr_fmt(self.config.config['REGEX']['HEADER_FORMAT'],
-                                             self.config.config['REGEX']['ID'],
-                                             self.config.config['REGEX']['SPECIES'])
+            self.alignment.set_fasta_hdr_fmt(self.config.config['REGEX']['header_format'],
+                                             self.config.config['REGEX']['id'],
+                                             self.config.config['REGEX']['species'])
         except KeyError:
             pass # use default setting
         self.case = Case()
@@ -211,7 +221,7 @@ class Gui():
             Tk.Entry(frame, textvariable=v[i]).grid(row=i, column=1, **cnf)
         bottom_frame = Tk.Frame(toplevel)
 
-        bt = Tk.Button(bottom_frame, text="Close", command=partial(self.cb_close_regex, toplevel, v))
+        bt = Tk.Button(bottom_frame, text="OK", command=partial(self.cb_close_regex, toplevel, v))
         bt_cancel = Tk.Button(bottom_frame, text="Cancel", command=toplevel.destroy)
         bt_help = Tk.Button(bottom_frame, text="Help", command=self.regex_help_window)
         bt.pack(side=Tk.LEFT)
@@ -303,7 +313,7 @@ class Gui():
         filemenu.add_command(label="Open case file", command=self.cb_open_case_file)
         filemenu.add_command(label="Save case file", command=self.cb_save_case_file)
         filemenu.add_separator()
-        filemenu.add_command(label="Set Regular expressions", command=self.cb_set_regex)
+        filemenu.add_command(label="Header parsing settings", command=self.cb_set_regex)
         filemenu.add_separator()
         filemenu.add_command(label="Set working directory", command=self.cb_set_working_dir)
         filemenu.add_separator()

@@ -1,7 +1,7 @@
-ERRORS = {0b0001:'File not found.',
-          0b0010:'Invalid or corrupt file.',
-          0b0011:'Could not save file.',
-          0b0100:'No case data.',
+ERRORS = {0b0001:'File not found',
+          0b0010:'Invalid or corrupt file',
+          0b0011:'Could not save file',
+          0b0100:'No case data',
           0b0101:'Not all sequences are of equal length',
           0b0111:'Case file formatting error',
           0b1111:'Unkwown error.',
@@ -66,8 +66,65 @@ WORKFLOW
 ========
 
 Before using the program the user needs to prepare a valid fasta file,
-with sequences of one or more species. A given species may be 
+with sequences of one or more species. A given species may be
 represented by more than one sequence, each with its own ID.
+
+Fasta header parsing settings
+-----------------------------
+In a fasta file a sequence data entry consists of two lines. The
+first line (starting with >), which we refer to as the sequence
+header, contains then species name and usually an sequence ID. The
+format of this header is not prescribed. FastaChar has a flexible
+mechanism to interprete sequence header strings. The condition that
+must be met, though, is that all sequences in a given fasta file
+adhere to the same format. It may therefore be required to configure
+FastaChar's sequence header parsing settings prior to open a fasta file
+with aligned sequences. 
+
+Sequence header parsing settings can be modified from selecting the
+option "Header parsing settings" from the "File" menu. This presents a
+new window with three entry fields for regular expressions. Regular
+expressions are patterns that allows for searching text strings. using
+a powerful wild-card system, see for example 
+http://www.rexegg.com/
+
+These entries could look like this:
+
++----------------+-------------------+
+| Header format: | {ID}[_ ]{SPECIES} |
++----------------+-------------------+
+| Regex ID:      | [A-Za-z0-9]+      |
++----------------+-------------------+
+| Regex SPECIES: | [A-Z][a-z _]+      |
++----------------+-------------------+
+
+The "Header format" describes the general layout of the header, where
+the regular expressions for the ID and species are substituted for
+{ID} and {SPECIES}, respectively. It is therefore mandatory that the
+header format contains the strings {ID} and {SPECIES}.
+
+In this example, the sequence headers is formed by some ID string,
+separated by a space or an underscore, as indicated by "[ _]", from
+the species string. The ID string is expected to be of the form of
+alphanumeric characters, possibly captialised, and digits, and at
+least one characeter long. The species strings is expected to start
+with a capital, followed by non-capitalised alphanumeric characters,
+and may include spaces and underscores.
+
+Using the patterns is shown above, the following header will be
+processed correctly:
+
+WBET118 Lyrodus_pedicellatus_Tl_FR 
+
+yielding the ID to be WBET118 and the species name to be
+Lyrodus_pedicellatus_Tl_FR.
+
+Any changes made, are accepted when clicking the button "OK", or
+discarded when clicking the button "Cancel". The button "Help"
+provides a new window with additional explanation.
+
+Open a fasta file
+-----------------
 
 To open a fasta file, select from the menu "File" and then "Open fasta
 file". A dialogue window appears from which a fasta file can be
@@ -76,6 +133,7 @@ directory if not previously specified). Prior to opening the fasta
 file, it may be convenient to set the working directory path
 first. The setting of the working directory is persistent (i.e., it
 will be kept from one session to the next).
+
 
 
 When the fasta file is opened, all species distinguished in the fasta
@@ -103,11 +161,9 @@ OPERATION
 =========
 The next step is to choose an operation. Two types of operations are
 available:
-    1) list unique characters of a set
-    2) list the differences within a set.
+    1) list unique characters in set A
+    2) list the differences within set A.
 
-Set A can be compared with set B, or vice versa, hence giving rise to
-four operations in total.
 
 Unique characters A operation 
 -----------------------------
@@ -116,7 +172,7 @@ in set A with those in set B and lists all columns and base
 characters (nucleotides or aminoacids) for which holds that for a given
 column:
     - all base characters in set A are identical; and
-    - all base characeters in set B are different from those in set A
+    - all base characters in set B are different from those in set A
 
 Differences within A operation 
 ------------------------------
@@ -197,9 +253,13 @@ the listbox of choice.
 This works identical for making a selection to move species from the
 list "species" to set A, or back, or between set A and B.
 
+
 """
 
 REGEX_HELP_TEXT = """\
+
+Regular expressions
+-------------------
 
 The sequence data in an aligned fasta file are assumed to be grouped
 in two lines of data: a line indicative of the species and an
@@ -214,7 +274,8 @@ consists of the strings '{ID}' and '{SPECIES}', where {ID} and {SPECIES}
 are placeholders for the identifier and species text strings,
 respectively.
 
-Example.
+Example
+-------
 
 Suppose the header is given by 'WBT001 Lyrodus pediciliatus', then the
 first word refers to an ID and the rest of the string refers to the
@@ -229,6 +290,37 @@ captialised letters and digits, and the species names consists of
 letters and spaces. Then the regular exprresion for the ID becomes
 '[A-Z0-9]+', and for the species names '[A-Z][a-z ]+'.
 
-Many websites provide further information on how to use regular expressions.
+Common patterns
+---------------
+
+string: WBET001_Nototeredo_norvagica_Ms_TK
+hdr_format : {ID}_{SPECIES}
+regex ID: [A-Z0-9]+
+regex SPECIES: [A-Za-z_]+
+
+string: NR_042052.1_Streptococcus_equinus_ATCC_9812_16S_ribosomal_RNA_partial_sequence
+hdr_format : {ID}_{SPECIES}
+regex ID: NR_[0-9]+\.[0-9]+
+regex SPECIES: [A-Za-z0-9_]+
+
+string: Tongapyrgus_kohitateaSp2
+hdr_format : {SPECIES}_{ID}
+regex ID: [A-Za-z0-9]+
+regex SPECIES: [A-Za-z]+
+
+string: ZSM20100597 Pontohedyle wiggi
+hdr_format : {ID} {SPECIES}
+regex ID: [A-Z0-9]+
+regex SPECIES: [A-Za-z ]+
+
+string: CP036529.1 Streptococcus pneumoniae strain 521 chromosome complete genome
+hdr_format : {ID}_{SPECIES}
+regex ID: [A-Z0-9]+\.[0-9]+
+regex SPECIES: [A-Za-z0-9_]+
+
+
+
+Many websites provide further information on how to use regular
+expressions. Try for example http://www.rexegg.com/.
 
 """
