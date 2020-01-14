@@ -2,12 +2,12 @@ from setuptools import setup
 
 setup(name="fastachar",
       version="0.0.2",
-      packages = ['fasta'],
+      packages = ['fastachar'],
       py_modules = [],
-      entry_points = {'console_scripts':['hw = fasta.tkgui:test'],
-                      'gui_scripts':['fastachar = fasta.tkgui:main']
+      entry_points = {'console_scripts':[],
+                      'gui_scripts':['fastachar = fastachar.tkgui:main']
                       },
-      install_requires = 'numpy xlwt'.split(),
+      install_requires = 'xlwt'.split(),
       author="Lucas Merckelbach",
       author_email="lucas.merckelbach@hzg.de",
       description="A simple program with GUI to compare dna sequences",
