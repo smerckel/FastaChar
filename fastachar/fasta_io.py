@@ -28,11 +28,17 @@ class Alignment(object):
     def set_fasta_hdr_fmt(self,header_format = "{ID}[_ ]{SPECIES}",
                           IDregex = "[A-Za-z0-9_]+[0-9\.]+[A-Za-z0-9]*",
                           SPECIESregex="[A-Za-z_]+"):
-        self.pattern_dict = dict(ID=IDregex, SPECIES=SPECIESregex, HEADER=header_format,
-                                 SEP=header_format.replace("{ID}","").replace("{SPECIES}",""))
-        self.regex_dict=dict(header=re.compile(header_format.format(**self.pattern_dict)),
-                             ID_first=header_format.index("ID")<header_format.index("SPECIES"))
-                                
+        self.pattern_dict, self.regex_dict = self.generate_regex_dict(header_format, IDregex, SPECIESregex)
+        
+
+    def generate_regex_dict(self, header_format, IDregex, SPECIESregex):
+        pattern_dict = dict(ID=IDregex, SPECIES=SPECIESregex, HEADER=header_format,
+                            SEP=header_format.replace("{ID}","").replace("{SPECIES}",""))
+
+        regex_dict=dict(header=re.compile(header_format.format(**pattern_dict)),
+                        ID_first=header_format.index("ID")<header_format.index("SPECIES"))
+        return pattern_dict, regex_dict
+    
     def load(self, fn):
         ''' Load sequence data from filename *fn* '''
         sequences=[]
@@ -69,28 +75,32 @@ class Alignment(object):
         return error, arg
                 
     
-    def parse_hdr(self, hdr):
+    def parse_hdr(self, hdr, **kwds):
         ''' Parse the header string of the sequence '''
+
+        pattern_dict = kwds.get('pattern_dict', self.pattern_dict)
+        regex_dict = kwds.get('regex_dict', self.regex_dict)
+            
         #>WBET042_Lyrodus_pedicellatus_Brittany_France
         if hdr[0] != ">" or len(hdr)==1:
             raise ValueError("Invalid header/file.")
         s = hdr[1:].strip()
         # Test whether we have a header with an ID. If not, create one of the form ID001. If yes, strip it from the species name.
-        if self.regex_dict['header'].match(s) is None:
+        if regex_dict['header'].match(s) is None:
             raise ValueError("Parsing error of header.\nHeader: {header}\nFormat: {hformat}\nPattern: {pattern}\n".format(header=hdr.strip(),
-                                                                                                                          hformat=self.pattern_dict['HEADER'],
-                                                                                                                          pattern=self.regex_dict['header'].pattern))
-        if self.regex_dict['ID_first']:
-            regex = re.match("{ID}{SEP}".format(**self.pattern_dict), s)
+                                                                                                                          hformat=pattern_dict['HEADER'],
+                                                                                                                          pattern=regex_dict['header'].pattern))
+        if regex_dict['ID_first']:
+            regex = re.match("{ID}{SEP}".format(**pattern_dict), s)
         else:
-            regex = re.search("{SEP}{ID}".format(**self.pattern_dict), s)
-        regexSep = re.search("{SEP}".format(**self.pattern_dict), s)
+            regex = re.search("{SEP}{ID}".format(**pattern_dict), s)
+        regexSep = re.search("{SEP}".format(**pattern_dict), s)
         if not regexSep:
             raise ValueError("Unexpected header.\nHeader: {header}\nPattern: {pattern}".format(header=hdr, pattern=self.regex.pattern))
 
         if not regex: # Fallback method.
             IDstring, species = s.split(regexSep.group())
-            if not self.regex_dict['ID_first']: # swap the values
+            if not regex_dict['ID_first']: # swap the values
                 IDstring, species = species, ID            
         else:
             species = s.replace(regex.group(),'')
@@ -346,7 +356,16 @@ class ReportXLS(object):
         self.book = MyWorkbook()
         self.sheet_idx = 0
         self.__row = 0
+        self.styles = self.define_styles()
         
+    def define_styles(self):
+        default = xlwt.Style.easyxf()
+        alert = xlwt.Style.easyxf()
+        alert.pattern.pattern=alert.pattern.SOLID_PATTERN
+        alert.pattern.pattern_fore_colour = xlwt.Style.colour_map['yellow']
+        s = dict(default=default, alert=alert)
+        return s
+    
     def __create_sheet(self):
         sheet_name = "worksheet%02d"%(self.sheet_idx)
         self.sheet = self.book.add_sheet(sheet_name)
@@ -410,9 +429,13 @@ class ReportXLS(object):
         self.sheet.write(n, 2, "Chars")
         n+=1
         for (j, state) in differences_set:
-            self.sheet.write(n, 1, "%d"%(j+1))
+            if len(state)==0 or len(state.intersection_of_subsets())==0:
+                style = self.styles['default']
+            else:
+                style = self.styles['alert']
+            self.sheet.write(n, 1, "%d"%(j+1), style)
             for i, s in enumerate(state._value):
-                self.sheet.write(n, 2+i, s)
+                self.sheet.write(n, 2+i, s, style)
             n+=1
 
     

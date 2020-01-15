@@ -206,7 +206,7 @@ class Gui():
     def setcwd(self,cwd):
         self.config.config['DEFAULT']['working_directory'] = cwd
 
-    def cb_open_fasta_file_for_hdr(self, parent):
+    def cb_open_fasta_file_for_hdr(self, parent, regexs):
         self.fasta_file = filedialog.askopenfilename(defaultextension=".fas",
                                                      filetypes=[('fasta files', '.fas'), ('all files', '.*')],
                                                      initialdir=self.cwd,
@@ -216,22 +216,48 @@ class Gui():
                                                      parent=parent,
                                                      title="Open fasta file")
         lines=[]
-        i=0
         if self.fasta_file:
             with open(self.fasta_file, 'r') as fp:
                 while True:
                     l = fp.readline()
                     if l and l.strip().startswith('>'):
-                        i+=1
-                        s = "{:2d} {}".format(i, l.rstrip()[1:])
+                        s = "{}".format(l.rstrip())
                         lines.append(s)
                     if not l:
                         break
         if lines:
-            self.cb_open_text_window(lines)
+            error_free = True
+            pattern_dict, regex_dict = self.alignment.generate_regex_dict(*[i.get() for i in regexs])
+            ID_strings = []
+            species_strings = []
+            na='---'
+            for line in lines:
+                try:
+                    IDspecies, species = self.alignment.parse_hdr(line, pattern_dict=pattern_dict, regex_dict=regex_dict)
+                except ValueError:
+                    ID_strings.append(na)
+                    species_strings.append(na)
+                    error_free = False
+                else:
+                    ID_strings.append(IDspecies)
+                    species_strings.append(species)
+
+            max_length = max([len(i) for i in lines])
+            max_length_id = max([len(i) for i in ID_strings])
+            max_length_species = max([len(i) for i in species_strings])
+            fmt_str = "{:%ds} -> {:%ds} |  {:%ds}"%(max_length, max_length_id, max_length_species)
+            parsed_lines = [fmt_str.format("Header", "ID", "Species")]
+            parsed_lines+=["-"*len(parsed_lines[0])]
+            parsed_lines += [fmt_str.format(s1, s2, s3) for s1, s2, s3 in zip(lines, ID_strings, species_strings)]
+            self.cb_open_text_window(parsed_lines)
+            if not error_free:
+                self.fasta_file = None
+        else:
+            self.fasta_file = None
 
         
     def cb_set_regex(self):
+        self.fasta_file = None
         cnf = dict(ipadx=10, ipady=10, padx=10, pady=0)
         cnfsticky = dict(sticky=Tk.N+Tk.E+Tk.S+Tk.W)
         toplevel = Tk.Toplevel()
@@ -248,8 +274,8 @@ class Gui():
 
         bt = Tk.Button(bottom_frame, text="OK", command=partial(self.cb_close_regex, toplevel, v))
         bt_cancel = Tk.Button(bottom_frame, text="Cancel", command=toplevel.destroy)
-        bt_open = Tk.Button(bottom_frame, text="Open file",
-                            command=partial(self.cb_open_fasta_file_for_hdr, toplevel))
+        bt_open = Tk.Button(bottom_frame, text="Preview file",
+                            command=partial(self.cb_open_fasta_file_for_hdr, toplevel, v))
         help_lines = fasta_doc.REGEX_HELP_TEXT.split("\n")
         bt_help = Tk.Button(bottom_frame, text="Help",
                             command=partial(self.cb_open_text_window, help_lines))
@@ -268,6 +294,8 @@ class Gui():
         self.config.config['REGEX']['header_format'] = v[0].get()
         self.config.config['REGEX']['id'] = v[1].get()
         self.config.config['REGEX']['species'] = v[2].get()
+        if self.fasta_file:
+            self._open_fasta_file()
         window.destroy()
         
     def cb_open_text_window(self, lines):
@@ -340,10 +368,10 @@ class Gui():
         # create a pulldown menu, and add it to the menu bar
         filemenu = Tk.Menu(menubar, tearoff=0)
         filemenu.add_command(label="Open fasta file", command=self.cb_open_fasta_file)
+        filemenu.add_command(label="Open fasta file /w preview", command=self.cb_set_regex)
         filemenu.add_command(label="Open case file", command=self.cb_open_case_file)
         filemenu.add_command(label="Save case file", command=self.cb_save_case_file)
-        filemenu.add_separator()
-        filemenu.add_command(label="Header parsing settings", command=self.cb_set_regex)
+
         filemenu.add_separator()
         filemenu.add_command(label="Set working directory", command=self.cb_set_working_dir)
         filemenu.add_separator()
@@ -535,6 +563,9 @@ class Gui():
                                                      #message,
                                                      parent=self.root,
                                                      title="Open fasta file")
+        self._open_fasta_file()
+        
+    def _open_fasta_file(self):
         r,arg = self.open_fasta_file()
         if r != fasta_io.OK:
             if arg:
