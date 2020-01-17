@@ -399,9 +399,9 @@ class Gui():
             
         cnf = dict(ipadx=10, ipady=10, padx=10, pady=0)
         cnfsticky = dict(sticky=Tk.N+Tk.E+Tk.S+Tk.W)
-        Tk.Label(root, text="Species").grid(row=0, column=0, **cnf)
-        Tk.Label(root, text="Set A").grid(row=0, column=1, **cnf)
-        Tk.Label(root, text="Set B").grid(row=0, column=2, **cnf)
+        Tk.Label(root, text="Unselected Species").grid(row=0, column=0, **cnf)
+        Tk.Label(root, text="Selected species list A").grid(row=0, column=1, **cnf)
+        Tk.Label(root, text="Selected species list B").grid(row=0, column=2, **cnf)
         # the list boxes
         #     define scrollbars
         frame_sequences=Tk.Frame()
@@ -470,9 +470,9 @@ class Gui():
         frame.grid(row=3, column=0, **cnf)
         self.operation_method = Tk.IntVar()
         self.operation_method.set(1)
-        Tk.Radiobutton(frame, text="Unique characters A",
+        Tk.Radiobutton(frame, text="Determine MDCs for species list A",
                        variable=self.operation_method, value=1).pack(anchor=Tk.W)
-        Tk.Radiobutton(frame, text="Differences within A",
+        Tk.Radiobutton(frame, text="Determine non-unique characters for species list A",
                        variable=self.operation_method, value=2).pack(anchor=Tk.W)
 
         bt_run = Tk.Button(root, text="Process", command=self.cb_run)
@@ -760,7 +760,7 @@ class Gui():
         if operation == 1:
             result = logic.compare_sets(set_A, set_B)
             report.report_header(set_A, set_B)
-            report.report_uniq_characters("Set A", set_A, set_B, result)
+            report.report_uniq_characters("List A", set_A, set_B, result)
             report.report_footer()
             self.report.config(state=Tk.NORMAL)
             self.report.insert(Tk.END, memofile.getvalue())
@@ -768,7 +768,7 @@ class Gui():
         elif operation == 2:
             result = logic.differences_within_set(set_A)
             report.report_header(set_A, [])
-            report.report_differences_in_set("Set A", set_A, result)
+            report.report_differences_in_set("List A", set_A, result)
             report.report_footer()
             self.report.config(state=Tk.NORMAL)
             self.report.insert(Tk.END, memofile.getvalue())

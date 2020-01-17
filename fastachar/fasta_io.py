@@ -211,6 +211,7 @@ class Report(object):
             pass
             
     def report_unique_characters(self, set_A, set_B, differences_set_A, unique_characters_A):
+        Q # obsolete???
         try:
             self.reportxls.report_unique_characters(set_A, set_B, differences_set_A, unique_characters_A)
         except AttributeError:
@@ -218,23 +219,23 @@ class Report(object):
         w = self.output_filename
         w.write("Filename : {}\n".format(self.filename))
         w.write("-"*80+"\n")
-        w.write("Set A:\n")
+        w.write("List A:\n")
         for i,s in enumerate(set_A):
             w.write("%2d %s (%s)\n"%(i+1, s.species, s.ID))
         w.write("\n")
-        w.write("Set B:\n")
+        w.write("List B:\n")
         for i,s in enumerate(set_B):
             w.write("%2d %s (%s)\n"%(i+1, s.species, s.ID))
         w.write("-"*80+"\n")
         w.write("\n\n")
         if differences_set_A:
-            w.write("The differences WITHIN the set A are:\n\n")
+            w.write("The sequences of species in list A have the following non-unique characters on\n columns:\n\n")
             w.write("column: Characters\n")
             for (j, state) in differences_set_A:
                 w.write("%6d  %s\n"%(j+1, " ".join(state._value)))
             w.write("\n")
         if unique_characters_A:
-            w.write("Unique characters of set A:\n\n")
+            w.write("The sequences of species in list A have the following molecular diagnostic characters:\n\n")
             w.write("column: chr|  characters different in other species\n")
             w.write("           |  ")
             for i in range(len(set_B)):
@@ -250,7 +251,7 @@ class Report(object):
             f = a/b*100
             w.write("%d of %d characters are unique (%.1f%%)"%(a,b,f))
         else:
-            w.write("Set A has no unique characters\n")
+            w.write("The sequences of the species in list A have no molecular diagnostic characters.\n")
         if not w == sys.stdout:
             w.close()
         else:
@@ -264,11 +265,11 @@ class Report(object):
         w = self.output_filename
         w.write("Filename : {}\n".format(self.filename))
         w.write("-"*80+"\n")
-        w.write("Set A:\n")
+        w.write("List A:\n")
         for i,s in enumerate(set_A):
             w.write("%2d %s (%s)\n"%(i+1, s.species, s.ID))
         w.write("\n")
-        w.write("Set B:\n")
+        w.write("List B:\n")
         for i,s in enumerate(set_B):
             w.write("%2d %s (%s)\n"%(i+1, s.species, s.ID))
         w.write("-"*80+"\n")
@@ -285,14 +286,18 @@ class Report(object):
         w.write("\n\n")
         
     def report_uniq_characters(self, set_name, set_A, set_B, unique_characters_A):
+        if 'A' in set_name:
+            other_set_name = set_name.replace('A','B')
+        else:
+            other_set_name = set_name.replace('B','A')
         try:
             self.reportxls.report_uniq_characters(set_name, set_A, set_B, unique_characters_A)
         except AttributeError:
             pass
         w = self.output_filename
         if unique_characters_A:
-            w.write("Characters unique in set {}, but different in other species set:\n\n".format(set_name))
-            w.write("column: chr|  characters different in other species\n")
+            w.write("The species in {} have the following MCDs:\n\n".format(set_name))
+            w.write("column: chr|  characters for species in {}\n".format(other_set_name))
             w.write("           |  ")
             for i in range(len(set_B)):
                 w.write("%d "%((i+1)%10))
@@ -306,7 +311,7 @@ class Report(object):
             f = a/b*100
             w.write("\n%d of %d characters are unique (%.1f%%)"%(a,b,f))
         else:
-            w.write("{} has no unique characters\n".format(set_name))
+            w.write("{} has no MCDs\n".format(set_name))
 
     def report_differences_in_set(self, set_name, set_A, differences_set):
         try:
@@ -318,7 +323,7 @@ class Report(object):
         w = self.output_filename
         if differences_set:
             count=0
-            w.write("The differences within {} are:\n\n".format(set_name))
+            w.write("The sequences of species in {} have the following non-unique characters on\ncolumns:\n\n".format(set_name))
             w.write("column:  chars\n")
             w.write("-"*80)
             w.write("\n")
@@ -333,7 +338,7 @@ class Report(object):
             a = len(differences_set)
             b = len(set_A[0].data)
             f = (b-a)/b*100
-            w.write("\nSummary")
+            w.write("\nSummary:")
             w.write("\n\t- %d of %d characters are different (%.1f%% identical)."%(a,b,f))
             if count:
                 w.write("\n\n\t - A number of %d instances (marked by *) were found \n\t  that *could* be potential unique.\n"%(count))
@@ -387,8 +392,8 @@ class ReportXLS(object):
         self.sheet.write(n, 0, "Filename:")
         self.sheet.write(n, 1, self.filename)
         n+=2
-        self.sheet.write(n, 0, "Set A")
-        self.sheet.write(n, 1, "Set B")
+        self.sheet.write(n, 0, "List A")
+        self.sheet.write(n, 1, "List B")
         n+=1
         for a, b in zip_longest(set_A, set_B):
             if a:
