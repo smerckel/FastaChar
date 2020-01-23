@@ -472,7 +472,7 @@ class Gui():
         self.operation_method.set(1)
         Tk.Radiobutton(frame, text="Determine MDCs for species list A",
                        variable=self.operation_method, value=1).pack(anchor=Tk.W)
-        Tk.Radiobutton(frame, text="Determine non-unique characters for species list A",
+        Tk.Radiobutton(frame, text="Determine potential MDCs for species list A",
                        variable=self.operation_method, value=2).pack(anchor=Tk.W)
 
         bt_run = Tk.Button(root, text="Process", command=self.cb_run)
@@ -731,14 +731,13 @@ class Gui():
         self.report.config(state=Tk.NORMAL)
         self.report.delete(1.0,Tk.END)
         self.report.config(state=Tk.DISABLED)
-        self.reportxls.clear()
+        self.reportxls = fasta_io.ReportXLS()
         
     def cb_run(self):
         operation = self.operation_method.get()
         set_A = self.alignment.select_sequences_from_list(self.data[self.lb_A])
         set_B = self.alignment.select_sequences_from_list(self.data[self.lb_B])
-        if (operation==1 and (len(set_A)==0 or len(set_B)==0)) or \
-           (operation==2 and len(set_A)==0):
+        if len(set_A)==0 or len(set_B)==0:
             return
         self.case.clear()
         try:
@@ -758,7 +757,7 @@ class Gui():
         logic = fasta_logic.SequenceLogic()
         
         if operation == 1:
-            result = logic.compare_sets(set_A, set_B)
+            result = logic.compare_sets(set_A, set_B, method="MDC")
             report.report_header(set_A, set_B)
             report.report_uniq_characters("List A", set_A, set_B, result)
             report.report_footer()
@@ -766,6 +765,14 @@ class Gui():
             self.report.insert(Tk.END, memofile.getvalue())
             self.report.config(state=Tk.DISABLED)
         elif operation == 2:
+            result = logic.compare_sets(set_A, set_B, method="potential_MDC_only")
+            report.report_header(set_A, set_B)
+            report.report_uniq_characters("List A", set_A, set_B, result)
+            report.report_footer()
+            self.report.config(state=Tk.NORMAL)
+            self.report.insert(Tk.END, memofile.getvalue())
+            self.report.config(state=Tk.DISABLED)
+        elif operation == 3:
             result = logic.differences_within_set(set_A)
             report.report_header(set_A, [])
             report.report_differences_in_set("List A", set_A, result)
@@ -785,6 +792,3 @@ def main():
     return 0
 
 
-
-def test():
-    print("hello world")

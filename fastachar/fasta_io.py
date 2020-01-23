@@ -210,52 +210,6 @@ class Report(object):
         except AttributeError:
             pass
             
-    def report_unique_characters(self, set_A, set_B, differences_set_A, unique_characters_A):
-        Q # obsolete???
-        try:
-            self.reportxls.report_unique_characters(set_A, set_B, differences_set_A, unique_characters_A)
-        except AttributeError:
-            pass
-        w = self.output_filename
-        w.write("Filename : {}\n".format(self.filename))
-        w.write("-"*80+"\n")
-        w.write("List A:\n")
-        for i,s in enumerate(set_A):
-            w.write("%2d %s (%s)\n"%(i+1, s.species, s.ID))
-        w.write("\n")
-        w.write("List B:\n")
-        for i,s in enumerate(set_B):
-            w.write("%2d %s (%s)\n"%(i+1, s.species, s.ID))
-        w.write("-"*80+"\n")
-        w.write("\n\n")
-        if differences_set_A:
-            w.write("The sequences of species in list A have the following non-unique characters on\n columns:\n\n")
-            w.write("column: Characters\n")
-            for (j, state) in differences_set_A:
-                w.write("%6d  %s\n"%(j+1, " ".join(state._value)))
-            w.write("\n")
-        if unique_characters_A:
-            w.write("The sequences of species in list A have the following molecular diagnostic characters:\n\n")
-            w.write("column: chr|  characters different in other species\n")
-            w.write("           |  ")
-            for i in range(len(set_B)):
-                w.write("%d "%((i+1)%10))
-            w.write("\n")
-            w.write("-"*80+"\n")
-            for (j, state_a, state_b) in unique_characters_A:
-                w.write("%6d: %s  |  "%(j+1, state_a._value[0]))
-                w.write("%s\n"%(" ".join(state_b._value)))
-            w.write("-"*80+"\n")
-            a = len(unique_characters_A)
-            b = len(set_A[0])
-            f = a/b*100
-            w.write("%d of %d characters are unique (%.1f%%)"%(a,b,f))
-        else:
-            w.write("The sequences of the species in list A have no molecular diagnostic characters.\n")
-        if not w == sys.stdout:
-            w.close()
-        else:
-            w.write("\n")
 
     def report_header(self, set_A, set_B):
         try:
@@ -294,22 +248,47 @@ class Report(object):
             self.reportxls.report_uniq_characters(set_name, set_A, set_B, unique_characters_A)
         except AttributeError:
             pass
+        potential_MDC_only = any([len(i[1])>=2 for i in unique_characters_A])
+
+        if potential_MDC_only:
+            modifier='potential '
+        else:
+            modifier=''
         w = self.output_filename
         if unique_characters_A:
-            w.write("The species in {} have the following MCDs:\n\n".format(set_name))
-            w.write("column: chr|  characters for species in {}\n".format(other_set_name))
-            w.write("           |  ")
+            if potential_MDC_only: # we need to list ALL characters for each position in A, so we need to compute how much space to reserve.
+                n_chars = len(unique_characters_A[0][1]._value)
+                marker_position = max(24, 10 + 2*n_chars)
+                filling = " "*(marker_position-23)
+            else:
+                filling = ""
+            w.write("The species in {} have the following {}MCDs:\n\n".format(set_name, modifier))
+            w.write("position: character(s) {}|  characters for species in {}\n".format(filling, other_set_name))
+            if potential_MDC_only:
+                s = " "*(8+2)
+                s += " ".join(["%d"%((i+1)%10) for i in range(n_chars)])
+                n_spaces_required = max(0,marker_position -len(s))
+                s += " "*n_spaces_required
+                w.write("{}|  ".format(s))
+            else:
+                w.write("                       {}|  ".format(filling))
             for i in range(len(set_B)):
                 w.write("%d "%((i+1)%10))
             w.write("\n")
             w.write("-"*80+"\n")
             for (j, state_a, state_b) in unique_characters_A:
-                w.write("%6d: %s  |  "%(j+1, state_a._value[0]))
+                if potential_MDC_only:
+                    s = "%8d: %s"%(j+1, " ".join(state_a._value))
+                    filling = " "*max(0, marker_position - len(s))
+                    w.write("{}{}|  ".format(s,filling))
+                else:
+                    w.write("%8d: %s            |  "%(j+1, state_a._value[0]))
                 w.write("%s\n"%(" ".join(state_b._value)))
             a = len(unique_characters_A)
             b = len(set_A[0].data)
             f = a/b*100
-            w.write("\n%d of %d characters are unique (%.1f%%)"%(a,b,f))
+            if not potential_MDC_only:
+                w.write("\n%d of %d characters are unique (%.1f%%)"%(a,b,f))
         else:
             w.write("{} has no MCDs\n".format(set_name))
 
@@ -323,8 +302,8 @@ class Report(object):
         w = self.output_filename
         if differences_set:
             count=0
-            w.write("The sequences of species in {} have the following non-unique characters on\ncolumns:\n\n".format(set_name))
-            w.write("column:  chars\n")
+            w.write("The sequences of species in {} have the following non-unique characters on\npositions:\n\n".format(set_name))
+            w.write("position:  chars\n")
             w.write("-"*80)
             w.write("\n")
             for j, state_a in differences_set:
@@ -373,7 +352,7 @@ class ReportXLS(object):
     
     def __create_sheet(self):
         sheet_name = "worksheet%02d"%(self.sheet_idx)
-        self.sheet = self.book.add_sheet(sheet_name)
+        self.sheet = self.book.add_sheet(sheet_name, cell_overwrite_ok=False)
         self.sheet_idx+=1
         
     def clear(self):
@@ -407,22 +386,41 @@ class ReportXLS(object):
         pass
     
     def report_uniq_characters(self, set_name, set_A, set_B, unique_characters_A):
+        potential_MDC_only = any([len(i[1])>=2 for i in unique_characters_A])
+        if potential_MDC_only:
+            len_A = len(unique_characters_A[0][1]._value)
+        else:
+            len_A = 1
         n = self.__row +2
         self.sheet.write(n, 0, "Unique characters of {}:\n\n".format(set_name))
         n+=1
-        self.sheet.write(n, 1, "Column")
-        self.sheet.write(n, 2, "Character")
-        self.sheet.write(n, 3, "Characters different in other species")
+        self.sheet.write(n, 1, "Position")
+        if potential_MDC_only:
+            self.sheet.write(n, 2, "Potential MDCs")
+            self.sheet.write(n, 2+len_A, "Characters different in other species")
+        else:
+            self.sheet.write(n, 2, "MDCs")
+            self.sheet.write(n, 3, "Characters different in other species")
         n+=1
-        self.sheet.write(n, 2, set_name)
+        if potential_MDC_only:
+            for i, v in enumerate(set_A):
+                formula = xlwt.Formula("A%d"%(4+i))
+                self.sheet.write(n, 2+i, formula)
+        else:
+            self.sheet.write(n, 2, "List A")
         for i, v in enumerate(set_B):
-            self.sheet.write(n, 3+i, "%d"%(i+1))
+            formula = xlwt.Formula("B%d"%(4+i))
+            self.sheet.write(n, 2 + len_A+i, formula)
         n+=1
         for j, state_a, state_b in unique_characters_A:
             self.sheet.write(n, 1, "%d"%(j+1))
-            self.sheet.write(n, 2, state_a._value[0])
+            if potential_MDC_only:
+                for i, _state in enumerate(state_a._value):
+                    self.sheet.write(n, 2+i, _state)
+            else:
+                self.sheet.write(n, 2, state_a._value[0])
             for i, _state in enumerate(state_b._value):
-                self.sheet.write(n, 3+i, _state)
+                self.sheet.write(n, 2+ len_A + i, _state)
             n+=1
         self.__row = n
         
@@ -430,7 +428,7 @@ class ReportXLS(object):
         n = self.__row +2
         self.sheet.write(n, 0, "The differences within {} are:".format(set_name))
         n+=1
-        self.sheet.write(n, 1, "Column")
+        self.sheet.write(n, 1, "Position")
         self.sheet.write(n, 2, "Chars")
         n+=1
         for (j, state) in differences_set:

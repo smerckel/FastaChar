@@ -88,15 +88,31 @@ class SequenceLogic(object):
         return [(j, s) for j, (c, s) in enumerate(r) if c]
 
     
-    def compare_sets(self, set_A, set_B, invert=False):
+    def compare_sets(self, set_A, set_B, method = "MDC"):
         '''Compares set A with set B and list 
-            the differences  if not invert
-            the agreements if invert
+        
+        Parameters
+        ----------
+        set_A: list
+            list of sequences in list A
+        set_B: list
+            list of sequence in list B
+        
+        method: string
+            method determining the comparison method:
+                "MDC" returns Molecular Diagnostic Characeters only
+                    conditions 1 and 2 are honoured
+                "potential_MDC_only" return MDCs only
+                    condition 2 is honoured, condition 1 is violated. 
+
         '''
+        if method not in "MDC potential_MDC_only".split():
+            raise ValueError('Invalid method specified. Use either MDC or potential_MDC_only.')
+        
         selection = []
         potential_CAs = self.mark_unit_length_states_within_set(set_A)
         for j, ((is_unique, state_a), b) in enumerate(zip(potential_CAs, zip(*set_B))):
-            if is_unique:
+            if (method=="MDC" and is_unique) or (method=="potential_MDC_only" and not is_unique):
                 state_b = State(b)
                 if not state_a.intersection(state_b):
                     selection.append((j, state_a, state_b))
