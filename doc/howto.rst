@@ -1,7 +1,7 @@
 What is Fastachar for and how to use it?
 ========================================
 
-**Fastachar** is a graphical user interface to the **fasta** python module
+**Fastachar** is a graphical user interface to the **fastachar** python module
 that allows a user to compare pre-aligned DNA sequences. Sequences of different 
 markers must be analysed individually (not concatenated). A typical application is to 
 distinguish one species from a set of different, but closely related other species, 
@@ -33,23 +33,24 @@ diagnostic character**.
 
 Preparation
 -----------
-The input for **Fastachar** is a list of DNA sequences, formatted in the
+The input for **fastachar** is a list of DNA sequences, formatted in the
 fasta format (see also
 https://en.wikipedia.org/wiki/FASTA_format). The program assumes that
 the DNA sequences that are going to be compared are:
 
 * already aligned, and
-* written into a single file using the fasta format.
+* written into a single file in fasta format.
 
 There are several software programs to align sequences (e.g. Mega and Geneious).
 
 Running **Fastachar**
 ---------------------
 
-On Windows, **Fastachar** is run by executing the fastachar.exe, and on
+On Windows, **fastachar** is run by executing the fastachar.exe, and on
 Linux, it is run by executing fastachar from the terminal
 console. Once started, a new window appears with three empty text
-boxes, labelled "Species", "Set A" and "Set B",
+boxes, labelled "Unselected species", "Selected species list A" and
+"Selected species list B",
 respectively. Below, there is a set of radio buttons to select the
 comparison operation, a button to execute the comparison ("Process")
 and a button ("Clear output") to clear the output that is generated
@@ -57,8 +58,9 @@ and shown in the bottom text box, see the Figure.
 
 .. figure:: _static/main_window.png
    :align: center
+   :width: 630px
       
-   Opening window of *Fastachar*
+   Figure 1: Main window of **Fastachar**
 
    
 Opening a fasta file
@@ -72,6 +74,51 @@ To start working, a fasta file is opened using::
 and select a fasta file from the dialogue offered. If a valid fasta
 file is read, the text box **Species** is populated with the names of
 the species found.
+
+Alternatively, a fasta file can be opened using::
+  File
+   └── Open fasta file /w preview
+
+This allows the user to specify how the **fastachar** should interpret
+the header strings that precedes each string of sequence data. When
+opening a file with preview, first a pop-up window appears:
+
+.. figure:: _static/regex.png
+   :align: center
+   :width: 275px
+	   
+   Figure 2: A pop-up window allowing to specify regular expressions for parsing
+   the fasta header strings
+
+
+   
++--------------+---------------+------------------------------------------------+
+|              | Example       | Description                                    |
++==============+===============+================================================+
+|Header format:|{ID} {SPECIES} | Ordering of id/lab code and species name       |
++--------------+---------------+------------------------------------------------+
+|Regex ID:     |[A-Za-z0-9]+   | Regular expression matching the id string      | 
++--------------+---------------+------------------------------------------------+
+|Regex SPECIES:|[A-Z][a-z ]+   | Regular expression matching the species string |
++--------------+---------------+------------------------------------------------+
+
+The *Header format* describes how each header is structured and must
+contain the strings {ID} and {SPECIES}. In the example given, the id
+precedes the species name and a space separates the two strings. The
+values for the entries *Regex ID* and *Regex SPECIES* are both regular
+expressions and are substituted into the *Header format* for *{ID}%*
+and *{SPECIES}*, respectively. See :ref:`regular_expressions` for more information on
+regular expressions.
+
+
+
+::
+   >WBET001_Nototeredo_norvagica_Ms_TK
+   TACTTTGTATTTTATTTTTTCTATTTGAGCGGGTTTGGT.....
+
+When reading the fasta file, the format of the headers of each
+sequence is ass
+This procedure assumes that 
 
 Selecting species for set  A and B
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

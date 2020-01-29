@@ -64,4 +64,5 @@ else:
 
     # Report the results to the terminal.
     report = fastachar.fasta_io.Report(filename)
-    report.report_unique_characters(set_A, set_B, differences_set_A, unique_characters_A)
+    report.report_header(set_A, set_B)
+    report.report_uniq_characters("Set A", set_A, set_B, unique_characters_A)
