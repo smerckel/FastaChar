@@ -17,6 +17,10 @@ CONFIG = dict(linux = dict(INIFILE = 'fastacharrc',
               win32 = dict(INIFILE = 'fastachar.ini',
                            INIPATH ='.fastachar'))
 
+DEFAULT_REGEX = dict(header_format="{ID}[ _]{SPECIES}",
+                     regexID = "[A-Za-z0-9\.]+",
+                     regexSPECIES = "[A-Za-z_ ]+")
+
 class ConfigFastachar(object):
     ''' Class to contain the configuration of the Fastachar gui
 
@@ -276,18 +280,28 @@ class Gui():
         bt_cancel = Tk.Button(bottom_frame, text="Cancel", command=toplevel.destroy)
         bt_open = Tk.Button(bottom_frame, text="Preview file",
                             command=partial(self.cb_open_fasta_file_for_hdr, toplevel, v))
+        bt_reset = Tk.Button(bottom_frame, text="Reset",
+                             command=partial(self.cb_reset, v))
+        
         help_lines = fasta_doc.REGEX_HELP_TEXT.split("\n")
         bt_help = Tk.Button(bottom_frame, text="Help",
                             command=partial(self.cb_open_text_window, help_lines))
         bt.pack(side=Tk.LEFT)
         bt_cancel.pack(side=Tk.LEFT)
         bt_open.pack(side=Tk.LEFT)
+        bt_reset.pack(side=Tk.LEFT)
         bt_help.pack(side=Tk.RIGHT)
         #
         frame.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1, **cnf)
         bottom_frame.pack(side=Tk.BOTTOM, **cnf)
         toplevel.focus_force()
 
+    def cb_reset(self, v):
+        s = "header_format regexID regexSPECIES".split()
+        for _v, _s in zip(v,s):
+            _v.set(DEFAULT_REGEX[_s])
+            
+                          
     def cb_close_regex(self,window, v):
         # update the regular expressions used in the alignment.
         self.alignment.set_fasta_hdr_fmt(*[_v.get() for _v in v])
