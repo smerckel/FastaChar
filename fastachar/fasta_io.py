@@ -32,6 +32,9 @@ class Alignment(object):
         
 
     def generate_regex_dict(self, header_format, IDregex, SPECIESregex):
+        if "{ID}" not in header_format:
+            header_format+="{ID}"
+            IDregex=''
         pattern_dict = dict(ID=IDregex, SPECIES=SPECIESregex, HEADER=header_format,
                             SEP=header_format.replace("{ID}","").replace("{SPECIES}",""))
 

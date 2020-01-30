@@ -243,8 +243,8 @@ class Gui():
                     species_strings.append(species)
 
             max_length = max([len(i) for i in lines])
-            max_length_id = max([len(i) for i in ID_strings])
-            max_length_species = max([len(i) for i in species_strings])
+            max_length_id = max(len("ID"), max([len(i) for i in ID_strings]))
+            max_length_species = max(len("Header"), max([len(i) for i in species_strings]))
             fmt_str = "{:%ds} -> {:%ds} |  {:%ds}"%(max_length, max_length_id, max_length_species)
             parsed_lines = [fmt_str.format("Header", "ID", "Species")]
             parsed_lines+=["-"*len(parsed_lines[0])]
