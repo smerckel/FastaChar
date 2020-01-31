@@ -98,6 +98,7 @@ class Alignment(object):
             regex = re.match("{ID}{SEP}".format(**pattern_dict), s)
         else:
             regex = re.search("{SEP}{ID}".format(**pattern_dict), s)
+        input("b")
         regexSep = re.search("{SEP}".format(**pattern_dict), s)
         if not regexSep:
             raise ValueError("Unexpected header.\nHeader: {header}\nPattern: {pattern}".format(header=hdr, pattern=self.regex.pattern))

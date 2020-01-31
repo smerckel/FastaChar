@@ -207,14 +207,14 @@ class Gui():
         self.config.config['DEFAULT']['working_directory'] = cwd
 
     def cb_open_fasta_file_for_hdr(self, parent, regexs):
-        self.fasta_file = filedialog.askopenfilename(defaultextension=".fas",
-                                                     filetypes=[('fasta files', '.fas'), ('all files', '.*')],
-                                                     initialdir=self.cwd,
-                                                     #initialfile,
-                                                     multiple=False,
-                                                     #message,
-                                                     parent=parent,
-                                                     title="Open fasta file")
+        self.fasta_file = self.fasta_file or filedialog.askopenfilename(defaultextension=".fas",
+                                                                        filetypes=[('fasta files', '.fas'), ('all files', '.*')],
+                                                                        initialdir=self.cwd,
+                                                                        #initialfile,
+                                                                        multiple=False,
+                                                                        #message,
+                                                                        parent=parent,
+                                                                        title="Open fasta file")
         lines=[]
         if self.fasta_file:
             with open(self.fasta_file, 'r') as fp:
@@ -243,17 +243,16 @@ class Gui():
                     species_strings.append(species)
 
             max_length = max([len(i) for i in lines])
-            max_length_id = max([len(i) for i in ID_strings])
-            max_length_species = max([len(i) for i in species_strings])
+            max_length_id = max(len("ID"), max([len(i) for i in ID_strings]))
+            max_length_species = max(len("SPECIES"), max([len(i) for i in species_strings]))
             fmt_str = "{:%ds} -> {:%ds} |  {:%ds}"%(max_length, max_length_id, max_length_species)
             parsed_lines = [fmt_str.format("Header", "ID", "Species")]
             parsed_lines+=["-"*len(parsed_lines[0])]
             parsed_lines += [fmt_str.format(s1, s2, s3) for s1, s2, s3 in zip(lines, ID_strings, species_strings)]
             self.cb_open_text_window(parsed_lines)
-            if not error_free:
-                self.fasta_file = None
         else:
-            self.fasta_file = None
+            error_free = False
+        self.fasta_file_is_valid = error_free
 
         
     def cb_set_regex(self):
@@ -294,7 +293,7 @@ class Gui():
         self.config.config['REGEX']['header_format'] = v[0].get()
         self.config.config['REGEX']['id'] = v[1].get()
         self.config.config['REGEX']['species'] = v[2].get()
-        if self.fasta_file:
+        if self.fasta_file and self.fasta_file_is_valid:
             self._open_fasta_file()
         window.destroy()
         
@@ -563,7 +562,8 @@ class Gui():
                                                      #message,
                                                      parent=self.root,
                                                      title="Open fasta file")
-        self._open_fasta_file()
+        if self.fasta_file:
+            self._open_fasta_file()
         
     def _open_fasta_file(self):
         r,arg = self.open_fasta_file()
