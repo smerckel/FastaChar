@@ -67,7 +67,11 @@ class Alignment(object):
                         sequences.append(Sequence(*self.parse_hdr(hdr), data))
                     except ValueError as e:
                         error = ERROR_FILE_INVALID
-                        arg = "Error: %s\nOffending line: %d\n"%(e.args[0], cnt+1)
+                        arg = "Error: %s\nOffending line: %d\n"%(e.args[0], cnt-1)
+                        break
+                    except KeyError as e:
+                        error = ERROR_FILE_NOT_FOUND
+                        arg = "Error: Invalid character encountered ('%s')\nOffending line :%d\n"%(e.args[0], cnt)
                         break
         if not error and not self.are_sequences_of_equal_lengths(sequences):
             error = ERROR_UNEQUAL_SEQS
