@@ -4,7 +4,7 @@ from collections import UserList, defaultdict
 class Char(set):
     IUPAC = {'A':'A', 'T':'T', 'C':'C', 'G':'G', 'Y':'CT', 'R':'AG', 'W':'AT',
              'S':'GC', 'K':'TG', 'M':'CA', 'D':'AGT', 'V':'AGC', 'H':'ACT', 'B':'CGT',
-             'X':'ACTG', 'N':'ACTG', '-':'-'}
+             'X':'ACTG', '?':'ACTG', 'N':'ACTG', '-':'-'}
 
     def __init__(self, c):
         s = Char.IUPAC[c]
