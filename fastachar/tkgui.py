@@ -304,7 +304,7 @@ class Gui():
     def cb_reset(self, v):
         s = "header_format id species".split()
         for _v, _s in zip(v,s):
-            _v.set(self.config.config.get('DEFAULT',s))
+            _v.set(self.config.config.get('DEFAULT',_s))
             
                           
     def cb_close_regex(self,window, v):
