@@ -304,8 +304,7 @@ class Gui():
     def cb_reset(self, v):
         s = "header_format id species".split()
         for _v, _s in zip(v,s):
-            _v.set(self.config.config.get('DEFAULT',s))
-            
+            _v.set(self.config.config.get('DEFAULT',_s))
                           
     def cb_close_regex(self,window, v):
         # update the regular expressions used in the alignment.
@@ -348,15 +347,27 @@ class Gui():
         toplevel.focus_force()
 
     def error_window(self, err_code, arg = ''):
-        toplevel = Tk.Toplevel()
         if arg:
             text = " : ".join([fasta_doc.ERRORS[err_code], arg])
         else:
             text = fasta_doc.ERRORS[err_code]
-        label1 = Tk.Label(toplevel, text=text,
-                          height=0, width=80, padx=10, pady=10,
-                          justify=Tk.LEFT)
-        label1.pack()
+
+        
+        toplevel = Tk.Toplevel()
+        frame = Tk.Frame(toplevel)
+        frame.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+        sb = Tk.Scrollbar(frame, orient=Tk.HORIZONTAL)
+        sb.pack(side=Tk.BOTTOM, fill=Tk.X)
+
+        report = Tk.Text(frame, state=Tk.DISABLED,
+                         padx=10, pady=10, xscrollcommand=sb.set,
+                         height=5,
+                         wrap=Tk.NONE)
+        report.pack(side=Tk.BOTTOM, fill=Tk.BOTH, expand=1)
+        sb.config(command=report.xview)
+        report.config(state=Tk.NORMAL)
+        report.insert(Tk.END, text)
+        report.config(state=Tk.DISABLED)
         bt = Tk.Button(toplevel, text="Close", padx=10, pady=10,
                        command=toplevel.destroy)
         bt.pack()
@@ -511,7 +522,7 @@ class Gui():
         sb_report.grid(column=1, row=0, **cnfsticky)
         sb_hor_report.grid(column=0, row=1, **cnfsticky)
         self.report = Tk.Text(frame_report, state=Tk.DISABLED,
-                              wrap=None,
+                              wrap=Tk.NONE,
                               yscrollcommand=sb_report.set,
                               xscrollcommand=sb_hor_report.set)
         self.report.grid(column=0, row=0, **cnfsticky)
@@ -588,10 +599,11 @@ class Gui():
     def _open_fasta_file(self):
         r,arg = self.open_fasta_file()
         if r != fasta_io.OK:
+            fn = os.path.basename(self.fasta_file)
             if arg:
-                arg += " (%s)"%(self.fasta_file)
+                arg += " (%s)"%(fn)
             else:
-                arg = self.fasta_file
+                arg = fn
             self.error_window(r, arg=arg)
             
     def cb_open_case_file(self):
