@@ -76,6 +76,7 @@ file is read, the text box **Species** is populated with the names of
 the species found.
 
 Alternatively, a fasta file can be opened using::
+  
   File
    └── Open fasta file /w preview
 
@@ -108,17 +109,22 @@ precedes the species name and a space separates the two strings. The
 values for the entries *Regex ID* and *Regex SPECIES* are both regular
 expressions and are substituted into the *Header format* for *{ID}%*
 and *{SPECIES}*, respectively. See :ref:`regular_expressions` for more information on
-regular expressions.
+regular expressions and a worked example.
+
+After specifying the regular expression, the button "Cancel" cancels
+the modification, whereas the button "OK" accepts them. The button
+"Preview file" provides the user with a chooser to select a fasta
+file. After this selection, the file is opened, and parsed. Each
+header is interpreted and how it fares is shown in a separate file.
+
+.. figure:: _static/parsing.png
+   :align: center
+   :width: 700px
+	   
+   Figure 3: Popup window showing the results of the header parsing.
 
 
 
-::
-   >WBET001_Nototeredo_norvagica_Ms_TK
-   TACTTTGTATTTTATTTTTTCTATTTGAGCGGGTTTGGT.....
-
-When reading the fasta file, the format of the headers of each
-sequence is ass
-This procedure assumes that 
 
 Selecting species for set  A and B
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
