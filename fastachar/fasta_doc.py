@@ -12,20 +12,22 @@ ERRORS = {0b0001:'File not found',
 ABOUT_TEXT="""
 ABOUT
 
-FastaChar is a simple python program that reads a fasta file
+FastaChar V0.1.0 is a simple python program that reads a fasta file
 with sequences for a number of different species. From the list
 of species, the user can make a selection of two sets (A) and 
 (B), which can be analysed. 
 
 The available operations are
-* Unique characters A: 
-  lists the columns in the sequences of A for which holds that:
-      - they are the same for all sequences in set A
-      - all sequences in set B have a different nucleotide or amino 
-        acid in this column.
-* Differences within A:
-  lists the columns of all sequences where the nucleotide or amino
-  acid is not identical.
+* Molecular diagnostic characters of the sequences in list A: 
+  lists the positions of the sequences of A for which holds that:
+      - they are the same for all sequences in list A
+      - all sequences in list B have a different nucleotide on
+        this position
+* Potential molecular diagnostic characters
+  lists the positions of all sequences of A for which holds that 
+      - the nucleotides on in list A are different from those in
+        list B, but,
+      - the nucleotides in list A are not unique.
 
 This software is licensed under GPLv3.
 
@@ -33,7 +35,9 @@ Authors:
     Lucas Merckelbach lucas.merckelbach@hzg.de
     Luisa Borges      luisaborges2000@yahoo.co.uk
 
-April 2017
+Febuary 2020
+
+Copyright 2017-2020
 """
 
 DISCLAIMER="""
@@ -107,7 +111,7 @@ In this example, the sequence headers is formed by some ID string,
 separated by a space or an underscore, as indicated by "[ _]", from
 the species string. The ID string is expected to be of the form of
 alphanumeric characters, possibly captialised, and digits, and at
-least one characeter long. The species strings is expected to start
+least one character long. The species strings is expected to start
 with a capital, followed by non-capitalised alphanumeric characters,
 and may include spaces and underscores.
 
@@ -149,9 +153,9 @@ NOTES:
       species.
 
 From the pool of available species, the user can make two selections,
-called set A and set B. Both sets should contain at least one
+called list A and list B. Both lists should contain at least one
 species. When species are selected, they are *moved* from their origin
-(the box called "species" in this case) to their destination (set A for
+(the box called "species" in this case) to their destination (list A for
 example).
 
 See below (MAKING A SELECTION) how to
@@ -161,23 +165,23 @@ OPERATION
 =========
 The next step is to choose an operation. Two types of operations are
 available:
-    1) list unique characters in set A
-    2) list the differences within set A.
+    1) Molecular diagnostic characters in A
+    2) Potential molecular diagnostic characters in A
 
 
-Unique characters A operation 
------------------------------
+Molecular diagnostic characters in A
+------------------------------------
 This operation compares the sequences
-in set A with those in set B and lists all columns and base
-characters (nucleotides or aminoacids) for which holds that for a given
-column:
-    - all base characters in set A are identical; and
-    - all base characters in set B are different from those in set A
+in list  A with those in list B and lists all positions and base
+characters for which holds that for a given
+position:
+    - all base characters in list A are identical; and
+    - all base characters in list B are different from those in list A
 
-Differences within A operation 
-------------------------------
-This operation lists all those columns for which the base characters
-(nucleotides or amino acids) of the sequences in set A are *not* the same.
+Potential molecular diagnostic characters in A
+----------------------------------------------
+This operation lists all those positions for which the base characters
+in A are not unique, but different from those in list B.
 
 After choosing the operation, the "PROCESS" button can be hit, to make
 the comparsion. The result report appears in the bottom window.
@@ -187,43 +191,42 @@ RESULT WINDOW
 
 The results are displayed in the following format. First the selected
 fasta file is printed, followed by all the sequences (including ID) in
-set A and set B. Then the actual result is printed. 
+list A and list B. Then the actual result is printed. 
 
-If set A is found not to have any unique characters then that will
+If list A is found not to have any unique characters then that will
 be the result. Otherwise the result is printed as
 
+The species in List A have the following MCDs:
 
-Unique characters of set A:
-
-column: chr|  characters different in other species
-           |  1 2 3 4 5 6 7 8 
+position: character(s) |  characters for species in List B
+                       |  1 2 3 4 5 6 7 8 
 --------------------------------------------------------------------------------
-    32: G  |  T T T T T T T T
-   202: G  |  C C C C C C C C
-   207: G  |  C C C C C C C C
+    32: G              |  T T T T T T T T
+   202: G              |  C C C C C C C C
+   207: G              |  C C C C C C C C
 
 
-which means that columns 32, 202 and 207 in *all* sequences of set A
-are the same, and have the character G. Set B, having 8 sequences,
+which means that positions 32, 202 and 207 in *all* sequences of list A
+are the same, and have the character G. List B, having 8 sequences,
 has sequences that are all different from G. Using the list of
-sequences in set B printed above, the differences between the
-sequences in this set can be attributed to different sequences.
+sequences in list B printed above, the differences between the
+sequences in this list can be attributed to different sequences.
 
-If the operation chosen was "differences within a set", then result is similar.
+When the operation for postenial MCDs is chosen, we might get a result such as:
 
-The differences within set A are:
+The species in List A have the following potential MCDs:
 
-column: chars
-    17 T T A A
-    26 A A C C
-   184 G G T T
-   189 C C T T
-   195 T T G G
-   206 C C A A
-   216 A A C C
-   234 T T C C
+position: character(s)  |  characters for species in List B
+          1 2 3 4       |  1 2 3 4 5 6 7 8 
+--------------------------------------------------------------------------------
+      16: G K G G       |  A A A A A A A A
 
-which indicates the columns where the sequences in set A (in this case) differ.
+
+which indicates the positions where the sequences in list A differ from those 
+in list B, but the characters in A are not unique. In this case, the second 
+sequence has a K on position 16, which codes for either a G or T. Given the 
+evidence of the other sequences, the user may conclude that the K most likely
+represents a G, so that G is a potenial MCD on position 16.
 
 Repeated processing will add the result to the result window, which
 can be cleared using the "Clear output" button. The information in the
@@ -233,8 +236,8 @@ report.
 CASE FILES
 ==================
 
-A given setting, defined by the selections made for species, set A,
-set B and operation, can be saved to file for reanalysis later, or
+A given setting, defined by the selections made for species, list A,
+list B and operation, can be saved to file for reanalysis later, or
 as starting point for a similar, but not identical comparison. A case
 file can be saved using the menu File -> Save case file, or loaded via
 menu File -> Load case file.
@@ -251,7 +254,7 @@ pressing "CTRL". Use the right-hand button to drag the selection into
 the listbox of choice.
 
 This works identical for making a selection to move species from the
-list "species" to set A, or back, or between set A and B.
+list "species" to list A, or back, or between list A and B.
 
 
 """

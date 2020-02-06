@@ -38,31 +38,29 @@ else:
 
     # Divide all the species in two groups, set A that matches the regex,
     # and set B that does not. Notice we can use regular expressions here too.
-    set_A, set_B = alignment.select_two_sequence_sets("Lyrodus.pedicellatus.*[mM][Ss]")
+    lst_A, lst_B = alignment.select_two_sequence_sets("Lyrodus.pedicellatus.*[mM][Ss]")
 
     # We could also use other methods to extract specific sequences.
     # Let's investigate Lyrodus pedicellatus. We suspect that the
     # sequences found in Turkey, they end with TK might be different
     # from those found in France (ending in Fr). So we select all
-    # Lyrodus species, but exclude those ending in TK, for set_A, and
-    # do the same for set_B, but invert the selection.
+    # Lyrodus species, but exclude those ending in TK, for lst_A, and
+    # do the same for lst_B, but invert the selection.
     
-    set_A = alignment.select_sequences(regex='Lyrodus[_ ]pedicellatus.*',
+    lst_A = alignment.select_sequences(regex='Lyrodus[_ ]pedicellatus.*',
                                       invert=False,
                                       exclude='.*[Tt][Kk]')
-    set_B = alignment.select_sequences(regex='Lyrodus[_ ]pedicellatus.*',
+    lst_B = alignment.select_sequences(regex='Lyrodus[_ ]pedicellatus.*',
                                       invert=True,
                                       exclude='.*[Tt][Kk]')
     
 
     S = fastachar.fasta_logic.SequenceLogic() 
-    # Compute the differences within set A
-    differences_set_A = S.differences_within_set(set_A)
 
     # Compute the unique characters in A with respect to B
-    unique_characters_A = S.compare_sets(set_A, set_B)
+    mcds = S.compute_mdcs(lst_A, lst_B)
 
     # Report the results to the terminal.
     report = fastachar.fasta_io.Report(filename)
-    report.report_header(set_A, set_B)
-    report.report_uniq_characters("Set A", set_A, set_B, unique_characters_A)
+    report.report_header(lst_A, lst_B)
+    report.report_mcds("List A", lst_A, lst_B, mcds)

@@ -2,6 +2,47 @@ from collections import UserList, defaultdict
 
 
 class Char(set):
+    ''' A character object representation a nucleotide in a sequence
+
+    The object is initialised with a character from the IUPAC list. Ambiguous characters, 
+    such as Y and W are expanded into their base nucleotides.
+
+    Parameters
+    ----------
+    c : single character str
+    
+    Attributes
+    ----------
+    _value : str
+        (non-expanded) character representation of nucleotide character.
+ 
+    Notes
+    -----
+    
+    The (IUPAC) characters supported are:
+
+    A
+    T
+    C
+    G
+    - (gap)
+
+    The ambiguous characters and their expansions:
+
+    Y -> C and T
+    R -> A and G
+    W -> A and T
+    S -> G and C
+    K -> T and G
+    M -> C and A
+
+    D -> A, G and T
+    V -> A, G and C
+    H -> A, C and T
+    B -> C, G and T
+
+    The masking characters X, ? and N expand to A, G, T and G.
+    '''
     IUPAC = {'A':'A', 'T':'T', 'C':'C', 'G':'G', 'Y':'CT', 'R':'AG', 'W':'AT',
              'S':'GC', 'K':'TG', 'M':'CA', 'D':'AGT', 'V':'AGC', 'H':'ACT', 'B':'CGT',
              'X':'ACTG', '?':'ACTG', 'N':'ACTG', '-':'-'}
@@ -14,7 +55,18 @@ class Char(set):
         self._value = c
         
 class State(set):
+    ''' The class' purpose is to hold a number of Char objects
+        and treat these as a set.
 
+    Parameters
+    ----------
+    chars : iterable of :obj: Char
+
+    Attributes
+    ----------
+    _value : list of str
+        ascii representation of characters.
+    '''
     def __init__(self, chars):
         super().__init__()
         self._value = []
@@ -23,6 +75,13 @@ class State(set):
             self.update(_char)
 
     def update(self, s):
+        ''' update the set with a new element
+
+        Parameters
+        ----------
+        s : instance of a Char object
+
+        '''
         self._value.append(s._value)
         self._chars.append(s)
         super().update(s)
@@ -36,8 +95,18 @@ class State(set):
 
 
 class Sequence(UserList):
-    ''' A class to hold the information of a single sequence '''
-    IDcounter = 0
+    ''' A class to hold the information of a single sequence 
+    
+    Parameters
+    ----------
+    ID : str
+        ID or lab code
+    species : str
+        species name
+    sequences_chars : str
+        ascii representation of the sequence
+
+    '''
     def __init__(self, ID, species, sequence_chars):
         super().__init__()
         self.ID, self.species = ID, species
@@ -45,18 +114,28 @@ class Sequence(UserList):
             self.append(Char(s))
 
     def __repr__(self):
-        return "Sequence {}({}) {}".format(self.species, self.ID, self.pretty_print(self, c=''))
-    
-    @staticmethod
-    def pretty_print(m,c=" "):
-        return c.join(_m._value for _m in m)
+        c = ''
+        s = c.join(_m._value for _m in self)
+        return "Sequence {}({}) {}".format(self.species, self.ID, s)
+        
         
 
 class SequenceLogic(object):
-
+    ''' Class for state comparison
+    '''
     
     def mark_unit_length_states_within_set(self, aset):
-        ''' 
+        ''' marks for each position whether this position has a unique character
+        
+        Parameters
+        ----------
+        aset : list of :obj: Char
+
+        Returns
+        -------
+        list of tuples 
+            a list of tuples with first element True for unique character, and 
+            second element the character(s) on this position of :obj: State.
         '''
         selection = []
         for j, c in enumerate(zip(*aset)):
@@ -65,46 +144,66 @@ class SequenceLogic(object):
             selection.append((condition, s))
         return selection
         
-    def differences_within_set(self, aset):
-        ''' differences_within_set(aset)
+    def list_non_unique_characters_in_set(self, aset):
+        ''' 
+        
+        Parameters
+        ----------
+        aset: list of :obj: Char
+            list of sequences
 
-        aset: list of seqeunces
-
-        returns a list of those columns for which are one or more differences found between the sequences
-        of this aset
+        Returns
+        -------
+        list of tuples
+            Returns list of tuples of position and characters, for which more 
+            than one different characters were found.
         '''
         r = self.mark_unit_length_states_within_set(aset)
         return [(j, s) for j, (c, s) in enumerate(r) if not c]
 
-    def agreements_within_set(self, aset):
-        ''' agreements_within_set(aset)
+    def list_unique_characters_in_set(self, aset):
+        ''' list where aset has unique characters
 
-        aset: list of sequences
+        Parameters
+        ----------
+        aset: list of :obj: Char
+            list of sequences
 
-        returns a list of those columns for which all columns agree between the sequences 
-        of this aset
+        Returns
+        -------
+        list of tuples
+            Returns list of tuples of position and characters, for which only 
+            one characeter was found.
         '''
         r = self.mark_unit_length_states_within_set(aset)
         return [(j, s) for j, (c, s) in enumerate(r) if c]
 
     
-    def compare_sets(self, set_A, set_B, method = "MDC"):
-        '''Compares set A with set B and list 
+    def compute_mdcs(self, set_A, set_B, method = "MDC"):
+        '''Computes molecular diagnostic characters
         
         Parameters
         ----------
-        set_A: list
+        set_A: list of :obj: Char
             list of sequences in list A
-        set_B: list
+        set_B: list of :obj: Char
             list of sequence in list B
         
         method: string
             method determining the comparison method:
-                "MDC" returns Molecular Diagnostic Characeters only
+                "MDC" returns Molecular Diagnostic Characters only
                     conditions 1 and 2 are honoured
                 "potential_MDC_only" return MDCs only
                     condition 2 is honoured, condition 1 is violated. 
+        Returns
+        -------
+        list of tuples
+            Each tuple contains the position, its state for list A, and its state for list B
+            sequences.
 
+        This method computes molecular diagnostic characters by comparing the sequences in list 
+        set_A and set_B. Two different criteria for comparison can be selected: return molecular 
+        diagnostic characters, or only the potential modlecular diagnostic characters.
         '''
         if method not in "MDC potential_MDC_only".split():
             raise ValueError('Invalid method specified. Use either MDC or potential_MDC_only.')

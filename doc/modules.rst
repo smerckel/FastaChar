@@ -1,7 +1,7 @@
-fasta
-=====
+fastachar
+=========
 
 .. toctree::
    :maxdepth: 4
 
-   fasta
+   fastachar

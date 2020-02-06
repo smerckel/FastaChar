@@ -1,9 +1,9 @@
-Programming with **fasta**
+Programming with fastachar
 ==========================
 
 
 The graphical user interface is intended to provide easy access to the
-functionality offered by the **fasta** module. Rather than using the
+functionality offered by the **fastachar** module. Rather than using the
 graphical interface, the user can also create her/his own python scripts.
 
 Example script

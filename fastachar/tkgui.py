@@ -789,29 +789,29 @@ class Gui():
         logic = fasta_logic.SequenceLogic()
         
         if operation == 1:
-            result = logic.compare_sets(set_A, set_B, method="MDC")
+            result = logic.compute_mdcs(set_A, set_B, method="MDC")
             report.report_header(set_A, set_B)
-            report.report_uniq_characters("List A", set_A, set_B, result)
+            report.report_mdcs("List A", set_A, set_B, result)
             report.report_footer()
             self.report.config(state=Tk.NORMAL)
             self.report.insert(Tk.END, memofile.getvalue())
             self.report.config(state=Tk.DISABLED)
         elif operation == 2:
-            result = logic.compare_sets(set_A, set_B, method="potential_MDC_only")
+            result = logic.compute_mdcs(set_A, set_B, method="potential_MDC_only")
             report.report_header(set_A, set_B)
-            report.report_uniq_characters("List A", set_A, set_B, result)
+            report.report_mdcs("List A", set_A, set_B, result)
             report.report_footer()
             self.report.config(state=Tk.NORMAL)
             self.report.insert(Tk.END, memofile.getvalue())
             self.report.config(state=Tk.DISABLED)
-        elif operation == 3:
-            result = logic.differences_within_set(set_A)
-            report.report_header(set_A, [])
-            report.report_differences_in_set("List A", set_A, result)
-            report.report_footer()
-            self.report.config(state=Tk.NORMAL)
-            self.report.insert(Tk.END, memofile.getvalue())
-            self.report.config(state=Tk.DISABLED)
+        # elif operation == 3:
+        #     result = logic.list_non_unique_characters_in_set(set_A)
+        #     report.report_header(set_A, [])
+        #     report.report_differences_in_set("List A", set_A, result)
+        #     report.report_footer()
+        #     self.report.config(state=Tk.NORMAL)
+        #     self.report.insert(Tk.END, memofile.getvalue())
+        #     self.report.config(state=Tk.DISABLED)
 
 
 def main():

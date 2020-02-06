@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name="fastachar",
-      version="0.0.2",
+      version="0.1.0",
       packages = ['fastachar'],
       py_modules = [],
       entry_points = {'console_scripts':[],

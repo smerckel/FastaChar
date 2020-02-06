@@ -34,8 +34,9 @@ code.
    howto
    installation   
    programming_with_fasta
+   regex
    
-References to the fasta source code
+References to the fastachar source code
 =======================================
 
 * :ref:`genindex`
