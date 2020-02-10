@@ -1,3 +1,14 @@
+''' Module implementing the graphical interface
+
+Attributes
+----------
+CONFIG : dict of {string:string}
+     default settings for the configuration files.
+
+DEFAULT : dict
+     default regular expressions
+'''
+
 from functools import partial
 import os
 from io import StringIO
@@ -22,21 +33,26 @@ DEFAULT_REGEX = dict(header_format="{ID}[ _]{SPECIES}",
                      species = "[A-Za-z_ ]+")
 
 class ConfigFastachar(object):
-    ''' Class to contain the configuration of the Fastachar gui
+    ''' 
+    Class to contain the configuration of the Fastachar gui
 
+    Attributes
+    ----------
+    config : :class:`configparser.ConfigParser`
+        A ConfigParser object holding the configuration read from file.
     '''
     def __init__(self):
         self.config = configparser.ConfigParser()
         self.load()
         
     def get_home(self):
-        ''' Return the home directory
+        ''' 
+        Gets the user's home directory
 
         Return
         ======
-        
-        home_dir: string
-
+        home_dir: str
+            Home directory
         '''
         if platform == 'linux':
             home_dir = os.getenv('HOME')
@@ -48,11 +64,12 @@ class ConfigFastachar(object):
         return home_dir
     
     def get_path(self):
-        ''' Return the full path to the configuration file.
+        ''' 
+        Return the full path to the configuration file.
         
         Returns
         -------
-        path : string
+        path : str
         '''
         home_dir = self.get_home()
         path = os.path.join(home_dir,
@@ -62,12 +79,20 @@ class ConfigFastachar(object):
                             CONFIG[platform]['INIFILE'])
 
     def set_defaults(self, section, **p):
-        ''' Sets the default values for the configuration file
+        ''' 
+        Sets the default values for the configuration file
         
+        Parameters
+        ----------
+        section : str
+            section name of the configuration
+
+        **p :
+            optional keywords that are part of the section
         '''
         if not self.config.has_section(section):
             self.config.add_section(section)
-        if section == 'DEFAULT':
+        if section == 'DEFAULTS':
             try:
                 wd = p.pop('working_directory')
             except KeyError:
@@ -75,20 +100,21 @@ class ConfigFastachar(object):
             default_cwd = wd or self.get_home()
             if not os.path.exists(default_cwd):
                 default_cwd = os.getcwd()
-            self.config.set('DEFAULT', 'working_directory', default_cwd)
+            self.config.set('DEFAULTS', 'working_directory', default_cwd)
             if not p:
                 for k, v in DEFAULT_REGEX.items():
-                    self.config('DEFAULT', k, v)
+                    self.config.set('DEFAULTS', k, v)
             else:
                 for k,v in p.items():
-                    self.config('DEFAULT', k,v)
+                    self.config.set('DEFAULTS', k,v)
         elif section == 'REGEX':
             self.config.set('REGEX', 'header_format','{ID} {SPECIES}')
             self.config.set('REGEX', 'id','[A-Za-z0-9\._]+')
             self.config.set('REGEX', 'species', '[A-Z][a-z ]+')
     
     def load(self):
-        ''' Load and parse configuration file
+        ''' 
+        Load and parse configuration file
         
         Upon calling this method, the configuration dictionary self.config gets
         populated.
@@ -97,22 +123,24 @@ class ConfigFastachar(object):
         p = self.get_path()
         cfg_file = self.config.read(p)
         if not cfg_file:
-            self.set_defaults()
+            self.set_defaults('DEFAULTS')
+            self.set_defaults('REGEX')
         else:
             try:
-                cwd = self.config.get('DEFAULT','working_directory')
+                cwd = self.config.get('DEFAULTS','working_directory')
             except configparser.NoSectionError:
-                self.set_defaults('DEFAULT')
+                self.set_defaults('DEFAULTS')
             else:
                 if not os.path.exists(cwd):
-                    self.set_defaults('DEFAULT')
+                    self.set_defaults('DEFAULTS')
             try:
                 self.config.get('REGEX','id')
             except configparser.NoSectionError:
                 self.set_defaults('REGEX')
 
     def save(self):
-        ''' Save the the current configuration to file.
+        ''' 
+        Save the the current configuration to file.
 
         This method writes self.config to file.
         '''
@@ -123,12 +151,23 @@ class ConfigFastachar(object):
     
           
 class Case(object):
+    '''
+    Class to hold the information for case files
+    
+    Attributes
+    ----------
+    data : dict
+         dictionary containing all information to write to file.
+    '''
     LIST_KWDS = "species setA setB".split()
     
     def __init__(self):
         self.clear()
         
     def clear(self):
+        ''' 
+        Clear :attr:`data`
+        '''
         self.data = {}
         
     def populate(self, filename,
@@ -139,6 +178,28 @@ class Case(object):
                  regex_header_format,
                  regex_id,
                  regex_species):
+        '''
+        Write the case information into data dictionary
+        
+        Parameters
+        ----------
+        filename : str
+            Name of input fasta file
+        species : list of str
+            Names of all species read
+        setA : list of :class:`fastachar.fasta_logic.Sequence`
+            list of sequences in list A
+        setB : list of :class:`fastachar.fasta_logic.Sequence`
+            list of sequences in list B
+        operation : int
+            operation of comparison
+        regex_header_format : str
+            regular expression for the header format
+        regex_id : str
+            regular expression for matching the ID or lab codes
+        regex_species : str
+            regular expression for matching the name of the species.
+        '''
         self.data = dict(filename=filename,
                          species=species,
                          setA=setA,
@@ -149,6 +210,21 @@ class Case(object):
                          regex_species=regex_species)
 
     def parse_line(self, line):
+        '''
+        Parse a line read from the case file
+        
+        Parameters
+        ----------
+        line : str
+            header string
+        
+        Returns
+        -------
+        kwd : str
+            attribute of the configuration
+        value : str or list of str
+            the value of the attribute
+        '''
         kwd, value = line.split("=")
         kwd=kwd.strip()
         value=value.strip()
@@ -158,6 +234,21 @@ class Case(object):
         return kwd, value
     
     def load(self, filename):
+        '''
+        Load a case file
+        
+        Parameters
+        ----------
+        filename : str
+            name of cae file
+
+        Returns
+        -------
+        error: int
+            error code
+        arg : str
+            error message
+        '''
         if not os.path.exists(filename):
             error = fasta.ERROR_FILE_NOT_FOUND
             arg = filename
@@ -182,6 +273,14 @@ class Case(object):
         return error, arg
     
     def save(self, filename):
+        '''
+        Save a case file
+
+        Parameters
+        ----------
+        filename : str
+             Name of the case file
+        '''
         with open(filename,'w') as fp:
             fp.write("filename = {}\n".format(self.data['filename']))
             fp.write("species = {}\n".format(" , ".join(self.data['species'])))
@@ -194,6 +293,28 @@ class Case(object):
         
 
 class Gui():
+    ''' Class defining the grahical user interface
+
+    Attributes
+    ----------
+    root : :class:`Tk.Tk()`
+        main window
+    
+    config : :class:`ConfigFastachar`
+        Configuration of FastaChar
+    
+    cwd : str
+        current working directory
+
+    alignment : :class:`fasta_io.Alignment`
+        aligned sequences.
+
+    case : :class:`Case`
+        Case object
+    
+    reportxls : :class:`fasta_io.ReportXLS`
+        object for reporting results as excel work sheets.
+    '''
     def __init__(self):
         self.root = Tk.Tk()
         self.root.wm_title('Fastachar')
@@ -210,13 +331,47 @@ class Gui():
         self.reportxls = fasta_io.ReportXLS()
 
     def getcwd(self):
-        cwd = self.config.config['DEFAULT']['working_directory']
+        '''
+        Get current working directory
+        
+        Returns
+        -------
+        cwd : str
+            current working directory
+        '''
+        cwd = self.config.config['DEFAULTS']['working_directory']
         return cwd
 
     def setcwd(self,cwd):
-        self.config.config['DEFAULT']['working_directory'] = cwd
+        '''
+        Set current working directory
+        
+        Parameters
+        ----------
+        cwd : str
+            current working directory
+        '''
+        self.config.config['DEFAULTS']['working_directory'] = cwd
 
     def cb_open_fasta_file_for_hdr(self, parent, regexs):
+        '''
+        Callback function to open fasta char for reading headers
+
+        Parameters
+        ----------
+        parent : 
+            parent window
+        
+        regexes : list
+             list of regular expressions
+
+
+        Notes
+        -----
+        This method sets :attr:`fasta_file`.
+        Depending on the results of reading this method sets :attr:`fasta_file_is_valid`.
+
+        '''
         self.fasta_file = self.fasta_file or filedialog.askopenfilename(defaultextension=".fas",
                                                                         filetypes=[('fasta files', '.fas'), ('all files', '.*')],
                                                                         initialdir=self.cwd,
@@ -266,6 +421,14 @@ class Gui():
 
         
     def cb_set_regex(self):
+        ''' 
+        Callback function to allow the user to set the regular expressions
+        
+        Notes
+        -----
+        This method sets :attr:`fasta_file` initially to None and it may be set to a str 
+        when by other methods called from this callback.
+        '''
         self.fasta_file = None
         cnf = dict(ipadx=10, ipady=10, padx=10, pady=0)
         cnfsticky = dict(sticky=Tk.N+Tk.E+Tk.S+Tk.W)
@@ -302,11 +465,28 @@ class Gui():
         toplevel.focus_force()
 
     def cb_reset(self, v):
+        '''
+        Callback to reset the regular expression to the default values.
+        '''
         s = "header_format id species".split()
         for _v, _s in zip(v,s):
-            _v.set(self.config.config.get('DEFAULT',_s))
+            _v.set(self.config.config.get('DEFAULTS',_s))
                           
     def cb_close_regex(self,window, v):
+        '''
+        callback to close regex window
+        
+        Parameters
+        ----------
+        window : 
+             window to close
+        v : 
+             list with Tk variables holding the regexes.
+        
+        Notes
+        -----
+        If a fasta file is marked for successful opening, it will be read.
+        '''
         # update the regular expressions used in the alignment.
         self.alignment.set_fasta_hdr_fmt(*[_v.get() for _v in v])
         self.config.config['REGEX']['header_format'] = v[0].get()
@@ -317,6 +497,14 @@ class Gui():
         window.destroy()
         
     def cb_open_text_window(self, lines):
+        ''' 
+        Create a general text window
+        
+        Parameters
+        ----------
+        lines : list of str
+            Text to be displayed
+        '''
         toplevel = Tk.Toplevel()
         frame = Tk.Frame(toplevel)
         frame.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
@@ -335,6 +523,9 @@ class Gui():
         toplevel.focus_force()
         
     def about_window(self):
+        '''
+        Create and populate the About window
+        '''
         toplevel = Tk.Toplevel()
         label1 = Tk.Label(toplevel, text=fasta_doc.ABOUT_TEXT, height=0, width=100,
                           justify=Tk.LEFT)
@@ -347,6 +538,16 @@ class Gui():
         toplevel.focus_force()
 
     def error_window(self, err_code, arg = ''):
+        '''
+        Create and populate an error window
+        
+        Parameters
+        ----------
+        err_code : int
+            error code
+        arg : str
+            error message to be displayed.
+        '''
         if arg:
             text = " : ".join([fasta_doc.ERRORS[err_code], arg])
         else:
@@ -375,6 +576,10 @@ class Gui():
 
 
     def help_window(self):
+        '''
+        Create and populate the Help window
+        '''
+
         toplevel = Tk.Toplevel()
         frame = Tk.Frame(toplevel)
         frame.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
@@ -394,6 +599,9 @@ class Gui():
 
 
     def create_menu(self):
+        '''
+        Create the Menu entries
+        '''
         menubar = Tk.Menu(self.root)
         # create a pulldown menu, and add it to the menu bar
         filemenu = Tk.Menu(menubar, tearoff=0)
@@ -421,6 +629,9 @@ class Gui():
         self.root.config(menu=menubar)
 
     def create_layout(self):
+        '''
+        Create the main layout of the application
+        '''
         root = self.root
         for i in range(3):
             Tk.Grid.columnconfigure(root, i, weight=1)
@@ -530,6 +741,9 @@ class Gui():
         sb_hor_report.config(command=self.report.xview)
 
     def create_bindings(self):
+        '''
+        Create the key bindings
+        '''
         self.dragging=False
         self.lb_sequences.bind("<B3-Motion>", self.cb_b1_motion_lb)
         self.lb_sequences.bind("<ButtonRelease-3>", self.cb_b1_release_lb)
@@ -551,6 +765,16 @@ class Gui():
         
         
     def move_items(self, lb_from, lb_to):
+        '''
+        Move items from one list to another
+        
+        Parameters
+        ----------
+        lb_from
+             from list (listbox)
+        lb_to
+             to list (listbox)
+        '''
         items = list(lb_from.curselection())
         items.reverse()
         for i in items:
@@ -585,6 +809,9 @@ class Gui():
             lb.insert(Tk.END, item)
         
     def cb_open_fasta_file(self):
+        '''
+        Callback top open a fasta file.
+        '''
         self.fasta_file = filedialog.askopenfilename(defaultextension=".fas",
                                                      filetypes=[('fasta files', '.fas'), ('all files', '.*')],
                                                      initialdir=self.cwd,
@@ -607,6 +834,9 @@ class Gui():
             self.error_window(r, arg=arg)
             
     def cb_open_case_file(self):
+        '''
+        Callback to open case file.
+        '''
         case_file = filedialog.askopenfilename(defaultextension=".fc",
                                                filetypes=[('case files', '.fc'), ('all files', '.*')],
                                                initialdir=self.cwd,
@@ -623,6 +853,9 @@ class Gui():
 
         
     def open_fasta_file(self):
+        '''
+        Read and process a fasta file.
+        '''
         error = fasta_io.OK
         arg = ''
         if self.fasta_file:
@@ -644,6 +877,9 @@ class Gui():
         return error, arg
     
     def open_case_file(self, case_file):
+        '''
+        Read and process a case file.
+        '''
         error = fasta_io.OK
         arg=''
         if case_file:
@@ -672,10 +908,16 @@ class Gui():
         return error, arg
 
     def cb_set_working_dir(self):
+        '''
+        Callback to set the working directory
+        '''
         self.cwd = filedialog.askdirectory(initialdir=self.cwd) or self.cwd
         self.setcwd(self.cwd)
         
     def cb_save_case_file(self):
+        '''
+        Callback to save the case file.
+        '''
         error = fasta_io.OK
         if self.case.data:
             case_file = filedialog.asksaveasfilename(defaultextension=".fc",
@@ -700,12 +942,22 @@ class Gui():
             self.error_window(error, arg)
             
     def cb_about(self):
+        '''
+        Callback to call about window
+        '''
+
         self.about_window()
         
     def cb_help(self):
+        ''' 
+        Callback to call help window 
+        '''
         self.help_window()
     
     def cb_save_report(self):
+        '''
+        Callback to save report.
+        '''
         error = fasta_io.OK
         out_file = filedialog.asksaveasfilename(defaultextension=".txt",
                                                 filetypes=[('text files', '.txt'), ('all files', '.*')],
@@ -732,6 +984,9 @@ class Gui():
             self.error_window(error, arg)
 
     def cb_save_report_xls(self):
+        '''
+        Callback to save report as xls file.
+        '''
         error = fasta_io.OK
         out_file = filedialog.asksaveasfilename(defaultextension=".xls",
                                                 filetypes=[('xls files', '.xls'), ('all files', '.*')],
@@ -760,12 +1015,18 @@ class Gui():
             
         
     def cb_clr(self):
+        '''
+        Callback to clear output
+        '''
         self.report.config(state=Tk.NORMAL)
         self.report.delete(1.0,Tk.END)
         self.report.config(state=Tk.DISABLED)
         self.reportxls = fasta_io.ReportXLS()
         
     def cb_run(self):
+        '''
+        Callback to run operation and do the comparison.
+        '''
         operation = self.operation_method.get()
         set_A = self.alignment.select_sequences_from_list(self.data[self.lb_A])
         set_B = self.alignment.select_sequences_from_list(self.data[self.lb_B])
@@ -787,19 +1048,13 @@ class Gui():
         report = fasta_io.Report(self.fasta_file, output_filename=memofile, reportxls = self.reportxls)
 
         logic = fasta_logic.SequenceLogic()
-        
-        if operation == 1:
-            result = logic.compute_mdcs(set_A, set_B, method="MDC")
-            report.report_header(set_A, set_B)
-            report.report_mdcs("List A", set_A, set_B, result)
-            report.report_footer()
-            self.report.config(state=Tk.NORMAL)
-            self.report.insert(Tk.END, memofile.getvalue())
-            self.report.config(state=Tk.DISABLED)
-        elif operation == 2:
-            result = logic.compute_mdcs(set_A, set_B, method="potential_MDC_only")
-            report.report_header(set_A, set_B)
-            report.report_mdcs("List A", set_A, set_B, result)
+        mdc_method = { 1 : 'MDC',
+                       2 : 'potential_MDC_only'}
+
+        if operation in [1,2]:
+            result = logic.compute_mdcs(set_A, set_B, method=mdc_method[operation])
+            report.report_header(set_A, set_B, method=mdc_method[operation])
+            report.report_mdcs("List A", set_A, set_B, result, method=mdc_method[operation])
             report.report_footer()
             self.report.config(state=Tk.NORMAL)
             self.report.insert(Tk.END, memofile.getvalue())
@@ -815,6 +1070,9 @@ class Gui():
 
 
 def main():
+    '''
+    Main function starting the GUI
+    '''
     gui = Gui()
     gui.create_menu()
     gui.create_layout()
