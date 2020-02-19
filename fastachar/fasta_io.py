@@ -20,7 +20,9 @@ ERROR_UNKNOWN      = 0b1111
 
 
 class Alignment(object):
-    ''' Class to hold sequences '''
+    ''' 
+    Class to hold sequences 
+    '''
     def __init__(self):
         self.sequences = []
         self.set_fasta_hdr_fmt()
@@ -28,28 +30,58 @@ class Alignment(object):
     def set_fasta_hdr_fmt(self,header_format = "{ID}[_ ]{SPECIES}",
                           IDregex = "[A-Za-z0-9_]+[0-9\.]+[A-Za-z0-9]*",
                           SPECIESregex="[A-Za-z_]+"):
-        ''' Sets the regular expressions used to parse the fasta headers
+        '''
+        Sets the regular expressions used to parse the fasta headers
 
         Parameters
         ----------
-        
-        header_format : string
+        header_format : str
             regular expression and containing the strings {ID} and {SPECIES}
-        IDregex : string
+
+        IDregex : str
             regular expression matching IDs and lab codes
-        SPECIESregex : string
+
+        SPECIESregex : str
             regular expression matchin species names.
 
-        .. Note:
-           
-           If it cannot get to work to parse the header strings correctly, a workaround 
-           can be to specify the header_format as '{SPECIES}', and let the SPECIESregex
-           capture anything by setting it to '.+'
+        Notes
+        -----
+        If it cannot get to work to parse the header strings correctly, a workaround 
+        can be to specify the header_format as '{SPECIES}', and let the SPECIESregex
+        capture anything by setting it to '.+'
         '''
         self.pattern_dict, self.regex_dict = self.generate_regex_dict(header_format, IDregex, SPECIESregex)
         
 
     def generate_regex_dict(self, header_format, IDregex, SPECIESregex):
+        '''
+        Generate dictionaries containing the regex for fasta header parsing.
+        
+        Parameters
+        ----------
+        header_format : str
+            Regular expression for the header format. Must contain the litteral strings `{ID}` and `{SPECIES}`
+
+        IDregex : str
+            Regular expression that should match the IDs or lab codes. 
+
+        SPECIESregex : str
+            Regular expression that should match the species names
+
+        Returns
+        -------
+        pattern_dict : dict of {str : str}
+            dictionary with the regex patterns
+
+        regex_dict: dict of {str: `re.compile`}
+            dictionary with compiled regular expressions.
+        
+
+        Notes
+        -----
+        The `header_format` string should contain both the litteral strings `{ID}` and `{SPECIES}`, which
+        are placeholders for the IDregex and SPECIESregex strings.
+        '''
         if "{ID}" not in header_format:
             header_format+="{ID}"
             IDregex=''
@@ -61,12 +93,12 @@ class Alignment(object):
         return pattern_dict, regex_dict
     
     def load(self, fn):
-        ''' Load sequence data from filename *fn* 
+        ''' 
+        Load sequence data from file 
 
         Parameters
         ----------
-        
-        fn : string
+        fn : str
             filename of file to open
         
         Returns
@@ -74,6 +106,7 @@ class Alignment(object):
         errorcode : int
             errocode indicating what went wrong if something did go wrong
             Returns 0 if OK, otherwise see error codes above.
+
         arg : string
             Error message
         '''
@@ -116,16 +149,17 @@ class Alignment(object):
                 
     
     def parse_hdr(self, hdr, **kwds):
-        ''' Parse the header string of the sequence 
+        ''' 
+        Parse the header string of the sequence 
 
         Parameters
         ----------
-        
         hdr : string
              fasta header to parse
         
-        **kwds :
-            if available, pattern_dict and regex_dict are extracted from the parameter list
+        **kwds
+            if available, pattern_dict and regex_dict are extracted from the parameter list,
+            otherwise default values are used.
 
         Returns
         -------
@@ -167,30 +201,31 @@ class Alignment(object):
         return IDstring, species
         
     def are_sequences_of_equal_lengths(self, sequences):
-        ''' Check whether all sequences are equally long.
+        ''' 
+        Check whether all sequences are equally long.
 
         Parameters
         ----------
-        sequences : list of strings
+        sequences : list of str
             contains a list of sequence characters.
 
         Returns
         -------
-        boolean : True if all are equal length, False otherwise
-        
+        boolean
+            True if all are equal length, False otherwise
         '''
         l = [len(s) for s in sequences]
         return len(set(l))==1
 
 
     def get_species_info(self):
-        ''' get_species_info()
+        ''' 
+        Return a dictionary mapping species name and lab codes.
 
         Returns
         -------
-        dictionary :
-            keys: species
-            values: IDs
+        dictionary of {str : str}
+            species info with species name as key, IDs as values.
         '''
         d = defaultdict(lambda : [])
         for s in self.sequences:
@@ -198,11 +233,13 @@ class Alignment(object):
         return d
 
     def get_species_list(self):
-        ''' get_species_list()
+        ''' 
+        Get a sorted list of species names.
 
         Returns
         -------
-        list of sorted species names.
+        list of str
+            list of sorted species names.
         '''
         d = self.get_species_info()
         k = list(d.keys())
@@ -210,7 +247,8 @@ class Alignment(object):
         return k
 
     def select_sequences(self, regex, invert = False, exclude=None):
-        '''select_sequences using regular expressions
+        '''
+        select sequences using regular expressions
 
         Parameters
         ----------
@@ -225,11 +263,10 @@ class Alignment(object):
 
         Returns
         -------
-        list
+        list of :class:`fastachar.fasta_logic.Sequence`
             List of sequences.
 
-
-
+        
         This method can be used to select a set of species using
         regular expressions. All species are returned that match the
         spefified regex, or all except these if invert is set to
@@ -237,7 +274,9 @@ class Alignment(object):
         further. This will affect the behaviour of the invert option,
         see the note below.
 
-        Note :: If an expression is given for the exlude parameter and
+        Notes
+        -----
+        If an expression is given for the exlude parameter and
         invert==True, then those sequences that match the regex
         selection AND the exclude selection is returned.
         '''
@@ -257,7 +296,8 @@ class Alignment(object):
         return group
 
     def select_two_sequence_sets(self, regex):
-        ''' select_two_sequence_sets(regex)
+        '''
+        Return two selections of sequences, one that matches regex, and one that does not.
 
         Parameters
         ----------
@@ -266,11 +306,14 @@ class Alignment(object):
 
         Returns
         -------
-        two lists of sequences : 
-             one matching set and one not matching set.
+        set_A : :class:`fastachar.fasta_logic.Sequence`
+            list of matching sequences
+        set_B : :class:`fastachar.fasta_logic.Sequence`
+            list of non-matching sequences
 
-        ..note :
 
+        Notes
+        -----
         The union of the two sets is identical to the whole data set.
         '''
         set_A = self.select_sequences(regex, invert=False)
@@ -278,7 +321,8 @@ class Alignment(object):
         return set_A, set_B
 
     def select_sequences_from_list(self, itemlist):
-        ''' Selects sequence objects for a list of species names
+        ''' 
+        Selects sequence objects from a list of species names
         
         Parameters
         ----------
@@ -287,13 +331,40 @@ class Alignment(object):
 
         Returns
         -------
-        list of sequence objects
+        list of :class" fastachar.fasta_logic.Sequence
+            list of matching sequences.
         '''
         group = [i for i in self.sequences if i.species in itemlist]
         return group
 
 
 class Report(object):
+    '''
+    Class for reporting results
+
+    Parameters
+    ----------
+    filename : str, optional
+        filename of fasta file used for data input
+    
+    output_filename : str or None, optional
+        name of output filename. If not None, then output is sent to stdout.
+
+    reportxls : :class:`ReportXLS` or None, optional
+        instance of an excel worksheet object
+
+    Attributes
+    ----------
+    filename : str, optional
+        filename of fasta file used for data input
+    
+    output_filename : str or None, optional
+        name of output filename. If not None, then output is sent to stdout.
+
+    reportxls : :class:`ReportXLS` or None, optional
+        instance of an excel worksheet object
+
+    '''
     def __init__(self, filename=None, output_filename=None, reportxls = None):
         self.filename = filename or "noname"
         self.output_filename = output_filename or sys.stdout
@@ -304,9 +375,23 @@ class Report(object):
             pass
             
 
-    def report_header(self, set_A, set_B):
+    def report_header(self, set_A, set_B, method):
+        '''
+        Write header of the report
+        
+        Parameters
+        ----------
+        set_A : list of :class:`fastachar.fasta_logic.Sequence`
+            Sequence list A
+
+        set_B : list of :class:`fastachar.fasta_logic.Sequence`
+            Sequence list B
+
+        method : str
+            Description of operation method
+        '''
         try:
-            self.reportxls.report_header(set_A, set_B)
+            self.reportxls.report_header(set_A, set_B, method)
         except AttributeError:
             pass
         w = self.output_filename
@@ -323,6 +408,9 @@ class Report(object):
         w.write("\n\n")
 
     def report_footer(self):
+        '''
+        Write footer of the report
+        '''
         try:
             self.reportxls.report_footer()
         except AttributeError:
@@ -332,32 +420,47 @@ class Report(object):
         w.write("="*80)
         w.write("\n\n")
         
-    def report_mdcs(self, set_name, set_A, set_B, unique_characters_A):
+    def report_mdcs(self, set_name, set_A, set_B, mdcs, method):
+        '''
+        Write results of molecular diagnostic characters
+        
+        Parameters
+        ----------
+        set_name : str
+            name of the set (List A for example)
+        
+        set_A : list of :class:`fastachar.fasta_logic.Sequence`
+            Sequence list A
+        set_B : list of :class:`fastachar.fasta_logic.Sequence`
+            Sequence list B
+        mdcs : list of tuples of (int, :class:`fastachar.fasta_logic.State`)
+            list of position and State tuples, i.e. molecular diagnostic characters
+        method : str
+            short description of operation method.
+        '''
         if 'A' in set_name:
             other_set_name = set_name.replace('A','B')
         else:
             other_set_name = set_name.replace('B','A')
         try:
-            self.reportxls.report_mdcs(set_name, set_A, set_B, unique_characters_A)
+            self.reportxls.report_mdcs(set_name, set_A, set_B, mdcs, method)
         except AttributeError:
             pass
-        potential_MDC_only = any([len(i[1])>=2 for i in unique_characters_A])
-
-        if potential_MDC_only:
-            modifier='potential '
-        else:
-            modifier=''
+        
         w = self.output_filename
-        if unique_characters_A:
-            if potential_MDC_only: # we need to list ALL characters for each position in A, so we need to compute how much space to reserve.
-                n_chars = len(unique_characters_A[0][1]._value)
+        if mdcs:
+            if method == 'potential_MDC_only': # we need to list ALL characters for each position in A,
+                                               # so we need to compute how much space to reserve.
+                n_chars = len(mdcs[0][1]._value)
                 marker_position = max(24, 10 + 2*n_chars)
                 filling = " "*(marker_position-23)
+                modifier = 'potential '
             else:
                 filling = ""
+                modifier = ''
             w.write("The species in {} have the following {}MDCs:\n\n".format(set_name, modifier))
             w.write("position: character(s) {}|  characters for species in {}\n".format(filling, other_set_name))
-            if potential_MDC_only:
+            if method == "potential_MDC_only":
                 s = " "*(8+2)
                 s += " ".join(["%d"%((i+1)%10) for i in range(n_chars)])
                 n_spaces_required = max(0,marker_position -len(s))
@@ -369,37 +472,48 @@ class Report(object):
                 w.write("%d "%((i+1)%10))
             w.write("\n")
             w.write("-"*80+"\n")
-            for (j, state_a, state_b) in unique_characters_A:
-                if potential_MDC_only:
+            for (j, state_a, state_b) in mdcs:
+                if method == "potential_MDC_only":
                     s = "%8d: %s"%(j+1, " ".join(state_a._value))
                     filling = " "*max(0, marker_position - len(s))
                     w.write("{}{}|  ".format(s,filling))
                 else:
                     w.write("%8d: %s            |  "%(j+1, state_a._value[0]))
                 w.write("%s\n"%(" ".join(state_b._value)))
-            a = len(unique_characters_A)
+            a = len(mdcs)
             b = len(set_A[0].data)
             f = a/b*100
-            if not potential_MDC_only:
+            if not method == "potential_MDC_only":
                 w.write("\n%d of %d characters are unique (%.1f%%)"%(a,b,f))
         else:
             w.write("{} has no MDCs\n".format(set_name))
 
-    def report_differences_in_set(self, set_name, set_A, differences_set):
+    def report_nucs(self, set_name, set_A, nucs):
+        '''
+        Report non-unique characters in list of sequences
+        
+        Parameters
+        ----------
+        set_name : str
+            Name of the set 
+        set_A : list of :class:`fastachar.fasta_logic.Sequence`
+            list of sequences
+        nucs : list of tuples of (int, :class:`fastachar.fasta_logic.State`)
+            list of position and State tuples
+        '''
         try:
-            self.reportxls.report_differences_in_set(set_name, differences_set)
+            self.reportxls.report_nucs(set_name, nucs)
         except IOError:
-            pass
-        except AttributeError:
+            print("io errpr")
             pass
         w = self.output_filename
-        if differences_set:
+        if nucs:
             count=0
             w.write("The sequences of species in {} have the following non-unique characters on\npositions:\n\n".format(set_name))
             w.write("position:  chars\n")
             w.write("-"*80)
             w.write("\n")
-            for j, state_a in differences_set:
+            for j, state_a in nucs:
                 if len(state_a.intersection_of_subsets())==1:
                     prefix='*'
                     count+=1
@@ -407,7 +521,7 @@ class Report(object):
                     prefix=' '
                 w.write("%s%5d %s\n"%(prefix,j+1, " ".join(state_a._value)))
             w.write("\n")
-            a = len(differences_set)
+            a = len(nucs)
             b = len(set_A[0].data)
             f = (b-a)/b*100
             w.write("\nSummary:")
@@ -429,6 +543,10 @@ class MyWorkbook(xlwt.Workbook):
         
             
 class ReportXLS(object):
+    '''
+    A class to report results in Excel format.
+
+    '''
     def __init__(self):
         self.book = MyWorkbook()
         self.sheet_idx = 0
@@ -436,6 +554,13 @@ class ReportXLS(object):
         self.styles = self.define_styles()
         
     def define_styles(self):
+        '''
+        Define some styles used
+
+        Returns
+        -------
+        s : dict of styles
+        '''
         default = xlwt.Style.easyxf()
         alert = xlwt.Style.easyxf()
         alert.pattern.pattern=alert.pattern.SOLID_PATTERN
@@ -449,20 +574,61 @@ class ReportXLS(object):
         self.sheet_idx+=1
         
     def clear(self):
+        '''
+        Remove all worksheets
+        '''
         self.book.remove_all_sheets()
         self.sheet_idx = 0
         
     def save(self, fn):
+        '''
+        Save to results file
+        
+        Parameters
+        ----------
+        fn : str
+            name of the file to write the results into
+        
+        Notes
+        -----
+        If the workbook has no data, nothing is saved, and any errors are silently ignored.
+        '''
         try:
             self.book.save(fn)
         except IndexError:
             pass # try to save an empty workbook ignore.
         
-    def report_header(self, set_A, set_B):
+    def report_header(self, set_A, set_B, method):
+        '''
+        Write header of the report
+        
+        Parameters
+        ----------
+        set_A : list of :class:`fastachar.fasta_logic.Sequence`
+            Sequence list A
+
+        set_B : list of :class:`fastachar.fasta_logic.Sequence`
+            Sequence list B
+
+        method : str
+            Description of operation method
+        '''
+        if method == 'MDC':
+            operation_str = "Determination Molecular Diagnostic Characters"
+        elif method == "potential_MDC_only":
+            operation_str = "Determination POTENTIAL Molecular Diagnostic Characters"
+        elif method == "nucs":
+            operation_str = "Determination non-unique characters"
+        else:
+            raise ValueError('Unknown method supplied.')
+        
         self.__create_sheet()
         n = 0
         self.sheet.write(n, 0, "Filename:")
         self.sheet.write(n, 1, self.filename)
+        n+=1
+        self.sheet.write(n, 0, "Operation:")
+        self.sheet.write(n, 1, operation_str)
         n+=2
         self.sheet.write(n, 0, "List A")
         self.sheet.write(n, 1, "List B")
@@ -476,38 +642,72 @@ class ReportXLS(object):
         self.__row = n
 
     def report_footer(self):
+        '''
+        Report Header
+
+        Notes
+        -----
+        Not implemented.
+        '''
         pass
     
-    def report_mdcs(self, set_name, set_A, set_B, unique_characters_A):
-        potential_MDC_only = any([len(i[1])>=2 for i in unique_characters_A])
-        if potential_MDC_only:
-            len_A = len(unique_characters_A[0][1]._value)
+    def report_mdcs(self, set_name, set_A, set_B, mdcs, method):
+        '''
+        Write results of molecular diagnostic characters
+        
+        Parameters
+        ----------
+        set_name : str
+            name of the set (List A for example)
+        
+        set_A : list of :class:`fastachar.fasta_logic.Sequence`
+            Sequence list A
+        set_B : list of :class:`fastachar.fasta_logic.Sequence`
+            Sequence list B
+        mdcs : list of tuples of (int, :class:`fastachar.fasta_logic.State`)
+            list of position and State tuples, i.e. molecular diagnostic characters
+        method : str
+            description of operation method
+        '''
+
+        if method == "potential_MDC_only":
+            if mdcs:
+                len_A = len(mdcs[0][1]._value)
+            else:
+                # No potential mdcs available. Say that and return.
+                len_A = 0
         else:
             len_A = 1
         n = self.__row +2
+
+        if len_A == 0:
+            self.sheet.write(n, 0, "No potential MDCs in {}:\n\n".format(set_name))
+            self.__row = n
+            return 
+        
         self.sheet.write(n, 0, "Unique characters of {}:\n\n".format(set_name))
         n+=1
         self.sheet.write(n, 1, "Position")
-        if potential_MDC_only:
+        if method == "potential_MDC_only":
             self.sheet.write(n, 2, "Potential MDCs")
             self.sheet.write(n, 2+len_A, "Characters different in other species")
         else:
             self.sheet.write(n, 2, "MDCs")
             self.sheet.write(n, 3, "Characters different in other species")
         n+=1
-        if potential_MDC_only:
+        if method == "potential_MDC_only":
             for i, v in enumerate(set_A):
-                formula = xlwt.Formula("A%d"%(4+i))
+                formula = xlwt.Formula("A%d"%(5+i))
                 self.sheet.write(n, 2+i, formula)
         else:
             self.sheet.write(n, 2, "List A")
         for i, v in enumerate(set_B):
-            formula = xlwt.Formula("B%d"%(4+i))
+            formula = xlwt.Formula("B%d"%(5+i))
             self.sheet.write(n, 2 + len_A+i, formula)
         n+=1
-        for j, state_a, state_b in unique_characters_A:
+        for j, state_a, state_b in mdcs:
             self.sheet.write(n, 1, "%d"%(j+1))
-            if potential_MDC_only:
+            if method == "potential_MDC_only":
                 for i, _state in enumerate(state_a._value):
                     self.sheet.write(n, 2+i, _state)
             else:
@@ -517,14 +717,26 @@ class ReportXLS(object):
             n+=1
         self.__row = n
         
-    def report_differences_in_set(self, set_name, differences_set):
+    def report_nucs(self, set_name, nucs):
+        '''
+        Report non-unique characters in list of sequences
+        
+        Parameters
+        ----------
+        set_name : str
+            Name of the set 
+        set_A : list of :class:`fastachar.fasta_logic.Sequence`
+            list of sequences
+        nucs : list of tuples of (int, :class:`fastachar.fasta_logic.State`)
+            list of position and State tuples
+        '''
         n = self.__row +2
-        self.sheet.write(n, 0, "The differences within {} are:".format(set_name))
+        self.sheet.write(n, 0, "The non-unique characters of {} are:".format(set_name))
         n+=1
         self.sheet.write(n, 1, "Position")
         self.sheet.write(n, 2, "Chars")
         n+=1
-        for (j, state) in differences_set:
+        for (j, state) in nucs:
             if len(state)==0 or len(state.intersection_of_subsets())==0:
                 style = self.styles['default']
             else:

@@ -6,7 +6,8 @@
 # expression. Then, for set A, the differences within this set as well
 # as its unique characters are computed. Finally, the results are
 # reported and dumped on the terminal.
-
+import sys
+sys.path.insert(0, '..')
 import fastachar
 
 
@@ -58,9 +59,24 @@ else:
     S = fastachar.fasta_logic.SequenceLogic() 
 
     # Compute the unique characters in A with respect to B
-    mcds = S.compute_mdcs(lst_A, lst_B)
+    method = "MDC"
+    
+    mcds = S.compute_mdcs(lst_A, lst_B, method)
 
     # Report the results to the terminal.
-    report = fastachar.fasta_io.Report(filename)
-    report.report_header(lst_A, lst_B)
-    report.report_mcds("List A", lst_A, lst_B, mcds)
+    reportxls = fastachar.fasta_io.ReportXLS()
+    report = fastachar.fasta_io.Report(filename, reportxls = reportxls)
+    report.report_header(lst_A, lst_B, method)
+    report.report_mdcs("List A", lst_A, lst_B, mcds, method)
+
+    # compute non unique charachters in B
+    nucs = S.list_non_unique_characters_in_set(lst_B)
+
+    report.report_header(lst_A, lst_B, method='nucs')
+    report.report_nucs("List B", lst_B, nucs)
+
+    #reportxls.save('test.xls')
+
+
+
+    

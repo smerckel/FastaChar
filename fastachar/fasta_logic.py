@@ -19,27 +19,27 @@ class Char(set):
     Notes
     -----
     
-    The (IUPAC) characters supported are:
+    The (IUPAC) characters supported are::
 
-    A
-    T
-    C
-    G
-    - (gap)
+        A
+        T
+        C
+        G
+        - (gap)
 
-    The ambiguous characters and their expansions:
+    The ambiguous characters and their expansions::
 
-    Y -> C and T
-    R -> A and G
-    W -> A and T
-    S -> G and C
-    K -> T and G
-    M -> C and A
+        Y -> C and T
+        R -> A and G
+        W -> A and T
+        S -> G and C
+        K -> T and G
+        M -> C and A
 
-    D -> A, G and T
-    V -> A, G and C
-    H -> A, C and T
-    B -> C, G and T
+        D -> A, G and T
+        V -> A, G and C
+        H -> A, C and T
+        B -> C, G and T
 
     The masking characters X, ? and N expand to A, G, T and G.
     '''
@@ -133,9 +133,9 @@ class SequenceLogic(object):
 
         Returns
         -------
-        list of tuples 
+        list of tuple of (bool, :class:`State`)
             a list of tuples with first element True for unique character, and 
-            second element the character(s) on this position of :obj: State.
+            second element the character(s) on this position of :class:`State`.
         '''
         selection = []
         for j, c in enumerate(zip(*aset)):
@@ -146,15 +146,16 @@ class SequenceLogic(object):
         
     def list_non_unique_characters_in_set(self, aset):
         ''' 
-        
+        list non-unique characters in set.
+
         Parameters
         ----------
-        aset: list of :obj: Char
+        aset: list of :class:`Char`
             list of sequences
 
         Returns
         -------
-        list of tuples
+        list of tuple of (int, :class:`State`)
             Returns list of tuples of position and characters, for which more 
             than one different characters were found.
         '''
@@ -166,12 +167,12 @@ class SequenceLogic(object):
 
         Parameters
         ----------
-        aset: list of :obj: Char
+        aset: list of :class:`Char`
             list of sequences
 
         Returns
         -------
-        list of tuples
+        list of tuple of (int, :class:`State`)
             Returns list of tuples of position and characters, for which only 
             one characeter was found.
         '''
@@ -184,26 +185,30 @@ class SequenceLogic(object):
         
         Parameters
         ----------
-        set_A: list of :obj: Char
+        set_A: list of :class:`Char`
             list of sequences in list A
-        set_B: list of :obj: Char
+        set_B: list of :class:`Char`
             list of sequence in list B
         
-        method: string
-            method determining the comparison method:
-                "MDC" returns Molecular Diagnostic Characters only
-                    conditions 1 and 2 are honoured
-                "potential_MDC_only" return MDCs only
-                    condition 2 is honoured, condition 1 is violated. 
+        method: {"MDC", "potential_MDC_only"}
+            method of comparison.
+
         Returns
         -------
-        list of tuples
+        list of tuples of (int, :class:`State`, :class:`State`)
             Each tuple contains the position, its state for list A, and its state for list B
             sequences.
 
+        
         This method computes molecular diagnostic characters by comparing the sequences in list 
         set_A and set_B. Two different criteria for comparison can be selected: return molecular 
         diagnostic characters, or only the potential modlecular diagnostic characters.
+
+        Method determining the comparison method:
+             * "MDC" returns Molecular Diagnostic Characters only
+                conditions 1 and 2 are honoured
+             * "potential_MDC_only" return MDCs only
+                condition 2 is honoured, condition 1 is violated. 
         '''
         if method not in "MDC potential_MDC_only".split():
             raise ValueError('Invalid method specified. Use either MDC or potential_MDC_only.')
