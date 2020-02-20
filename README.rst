@@ -57,19 +57,8 @@ the .tgz file and cd-ing into the newly created directory, you run::
   $ python3 setup.py build && sudo python3 setup.py install && sudo python3 setup.py clean
 
 Either installation method for *Fastachar* should take care of
-installing the dependencies (numpy and xlwt) correctly.
+installing the dependencies (xlwt) correctly.
 
-.. note::
-  Although setuptools will resolve the dependency on numpy correctly,
-  it is not capable of installing numpy as a wheel, but rather
-  compiles it. This may take a long time, and possibly not be
-  successful because of other dependencies that are not met. Therefore
-  it is recommended to install numpy either via the distribution's
-  package manager, or using pip::
-
-    $ pip3 install numpy
-
-  which *does* install numpy's wheel version.
 
 Windows
 ~~~~~~~

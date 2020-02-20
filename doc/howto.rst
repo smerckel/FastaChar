@@ -250,4 +250,4 @@ respectively.
 .. [Merckelbach2020] "FastaChar: software for rapid determination of
 		     molecular diagnostic characters to describe
 		     species" by Merckelbach, Lucas; Borges, Luisa
-		     Maria. Submitted for publication in Methods in Ecology and Evolution.
+		     Maria. Submitted for publication.
