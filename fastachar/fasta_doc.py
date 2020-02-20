@@ -4,6 +4,7 @@ ERRORS = {0b0001:'File not found',
           0b0100:'No case data',
           0b0101:'Not all sequences are of equal length',
           0b0111:'Case file formatting error',
+          0b1000:'Regular expression formatting error',
           0b1111:'Unkwown error.',
 }
 

@@ -15,7 +15,7 @@ from io import StringIO
 from sys import platform
 
 import tkinter as Tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 import tkinter.ttk as ttk
 
 import configparser
@@ -372,6 +372,13 @@ class Gui():
         Depending on the results of reading this method sets :attr:`fasta_file_is_valid`.
 
         '''
+        try:
+            pattern_dict, regex_dict = self.alignment.generate_regex_dict(*[i.get() for i in regexs])
+        except:
+            self.error_window(err_code=0b1000, arg = 'Failed to interpret the regular expression patterns.', parent=parent)
+            return
+
+        
         self.fasta_file = self.fasta_file or filedialog.askopenfilename(defaultextension=".fas",
                                                                         filetypes=[('fasta files', '.fas'), ('all files', '.*')],
                                                                         initialdir=self.cwd,
@@ -392,7 +399,6 @@ class Gui():
                         break
         if lines:
             error_free = True
-            pattern_dict, regex_dict = self.alignment.generate_regex_dict(*[i.get() for i in regexs])
             ID_strings = []
             species_strings = []
             na='---'
@@ -537,7 +543,8 @@ class Gui():
         bt.pack()
         toplevel.focus_force()
 
-    def error_window(self, err_code, arg = ''):
+                             
+    def error_window(self, err_code, arg = '', parent=None):
         '''
         Create and populate an error window
         
@@ -549,12 +556,13 @@ class Gui():
             error message to be displayed.
         '''
         if arg:
-            text = " : ".join([fasta_doc.ERRORS[err_code], arg])
+            text = "\n".join([fasta_doc.ERRORS[err_code], arg])
         else:
             text = fasta_doc.ERRORS[err_code]
 
         
-        toplevel = Tk.Toplevel()
+        toplevel = Tk.Toplevel(parent)
+        toplevel.grab_set()
         frame = Tk.Frame(toplevel)
         frame.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         sb = Tk.Scrollbar(frame, orient=Tk.HORIZONTAL)
@@ -573,7 +581,7 @@ class Gui():
                        command=toplevel.destroy)
         bt.pack()
         toplevel.focus_force()
-
+        
 
     def help_window(self):
         '''
