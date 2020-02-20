@@ -6,21 +6,26 @@ Regular expressions in FastaChar
 What is a regular expression anyway?
 ------------------------------------
 
-Adapted from wikipedia ::
+Adapted from wikipedia :
+
+.. pull-quote::
   
   The phrase regular expressions, also called regexes, is often used to
   mean the specific, standard textual syntax for representing patterns
   for matching text. Each character in a regular expression (that is, each
   character in the string describing its pattern) is either a
   metacharacter, having a special meaning, or a regular character that
-  has a literal meaning. For example, in the regex a., a is a literal
+  has a literal meaning.
+
+  For example, in the regex 'a.', a is a literal
   character which matches just 'a', while '.' is a metacharacter that
   matches every character except a newline. Therefore, this regex
   matches, for example, 'a ', or 'ax', or 'a0'. Together, metacharacters
   and literal characters can be used to identify text of a given
-  pattern, or process a number of instances of it. Pattern matches may
-  vary from a precise equality to a very general similarity, as
-  controlled by the metacharacters. For example, . is a very general
+  pattern, or process a number of instances of it.
+
+  Pattern matches may vary from a precise equality to a very general similarity, as
+  controlled by the metacharacters. For example, '.' is a very general
   pattern, [a-z] (match all lower case letters from 'a' to 'z') is less
   general and a is a precise pattern (matches just 'a'). The
   metacharacter syntax is designed specifically to represent prescribed
@@ -52,6 +57,7 @@ Example
 Let us say we have a fasta file with the following entry:
 
 ::
+   
    >WBET001_Nototeredo_norvagica_Ms_TK
    TACTTTGTATTTTATTTTTTCTATTTGAGCGGGTTTGGT.....
 
@@ -97,4 +103,22 @@ regular expression should be described for the species string.
 Can we disable the use of regular expressions?
 ----------------------------------------------
 
-The use of regular expression
+It can be, of course, that species names and lab codes within a single
+fasta file do not adhere to a specific format, or they are formatted
+in such a way that it is not easy to find a regular expression pattern
+that works for all entries. The solution in such a case would be to
+specify a regular expression that captures all.
+
+The header format then reads::
+
+  {SPECIES}
+
+the field for the regular expression for the ID or lab code, Regex ID,
+can be left empty, and the regular expression for the species, Regex
+SPECIES becomes::
+
+  .*
+
+which captures all characters.
+
+  

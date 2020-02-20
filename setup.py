@@ -7,7 +7,7 @@ setup(name="fastachar",
       entry_points = {'console_scripts':[],
                       'gui_scripts':['fastachar = fastachar.tkgui:main']
                       },
-      install_requires = 'xlwt'.split(),
+      install_requires = 'sphinx-rtd-theme xlwt'.split(),
       author="Lucas Merckelbach",
       author_email="lucas.merckelbach@hzg.de",
       description="A simple program with GUI to compare dna sequences",
