@@ -1,5 +1,5 @@
 from collections import UserList, defaultdict
-
+import re
 
 class Char(set):
     ''' A character object representation a nucleotide in a sequence
@@ -107,16 +107,36 @@ class Sequence(UserList):
         ascii representation of the sequence
 
     '''
+    PATTERNS = (re.compile('^[N]+'), re.compile('[N]+$'))
+    
     def __init__(self, ID, species, sequence_chars):
         super().__init__()
         self.ID, self.species = ID, species
         for s in sequence_chars:
             self.append(Char(s))
+        self.srep = sequence_chars
 
     def __repr__(self):
-        c = ''
-        s = c.join(_m._value for _m in self)
-        return "Sequence {}({}) {}".format(self.species, self.ID, s)
+        return "Sequence {}({}) {}".format(self.species, self.ID, self.srep)
+
+    def get_masked_positions(self):
+        ''' Get masked positions
+
+        Returns the positions where this sequences has a continuous block of N characters,
+        either leading, or trailing.
+
+        Returns
+        -------
+        m : list of int
+            True where masked N appears.
+        '''
+        m = [False]*len(self.srep)
+        for p in Sequence.PATTERNS:
+            match = p.search(self.srep)
+            if match:
+                for i in range(*match.span()):
+                    m[i]=True
+        return m
         
         
 
@@ -180,7 +200,7 @@ class SequenceLogic(object):
         return [(j, s) for j, (c, s) in enumerate(r) if c]
 
     
-    def compute_mdcs(self, set_A, set_B, method = "MDC"):
+    def compute_mdcs(self, set_A, set_B, method = "MDC", ignore_masking_N=False):
         '''Computes molecular diagnostic characters
         
         Parameters
@@ -192,6 +212,10 @@ class SequenceLogic(object):
         
         method: {"MDC", "potential_MDC_only"}
             method of comparison.
+
+        ignore_masking_N : bool
+            flag to ignore leading and trailing N characters in sequences, as theses are (probably) used
+            as masks.
 
         Returns
         -------
@@ -215,10 +239,16 @@ class SequenceLogic(object):
         
         selection = []
         potential_CAs = self.mark_unit_length_states_within_set(set_A)
-        for j, ((is_unique, state_a), b) in enumerate(zip(potential_CAs, zip(*set_B))):
+        masked_positions = [b.get_masked_positions() for b in set_B]
+        for j, ((is_unique, state_a), b, m) in enumerate(zip(potential_CAs, zip(*set_B), zip(*masked_positions))):
             if (method=="MDC" and is_unique) or (method=="potential_MDC_only" and not is_unique):
+                if ignore_masking_N:
+                    b_reduced = tuple([_b for _b, _m in zip(b, m) if not _m])
+                if not ignore_masking_N or not b_reduced: # avoid that b will be empty (all entries are N)
+                    b_reduced = b
                 state_b = State(b)
-                if not state_a.intersection(state_b):
+                state_b_reduced = State(b_reduced)
+                if not state_a.intersection(state_b_reduced):
                     selection.append((j, state_a, state_b))
         return selection
 
