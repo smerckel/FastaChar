@@ -516,6 +516,7 @@ class Gui():
         lines : list of str
             Text to be displayed
         '''
+        
         toplevel = Tk.Toplevel()
         frame = Tk.Frame(toplevel)
         frame.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
@@ -523,6 +524,7 @@ class Gui():
         sb_report.pack(side=Tk.RIGHT, fill=Tk.Y)
         report = Tk.Text(frame, state=Tk.DISABLED,
                          padx=10, pady=10, yscrollcommand=sb_report.set)
+        
         report.pack(side=Tk.RIGHT, fill=Tk.BOTH, expand=1)
         sb_report.config(command=report.yview)
         bt = Tk.Button(toplevel, text="Close", command=toplevel.destroy)
@@ -531,6 +533,9 @@ class Gui():
         for line in lines:
             report.insert(Tk.END, "{}\n".format(line))
         report.config(state=Tk.DISABLED)
+        report.tag_configure("red", foreground="red")
+        report.highlight_pattern("the", "red")
+
         toplevel.focus_force()
         
     def about_window(self):

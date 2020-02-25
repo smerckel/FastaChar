@@ -9,8 +9,11 @@ class Char(set):
 
     Parameters
     ----------
-    c : single character str
-    
+    c : str 
+         IUPAC character
+    subst_c : str
+         IUPAC character substitute for logical operations.
+
     Attributes
     ----------
     _value : str
@@ -41,14 +44,17 @@ class Char(set):
         H -> A, C and T
         B -> C, G and T
 
-    The masking characters X, ? and N expand to A, G, T and G.
+    The masking characters X and N expand to A, G, T and G.
     '''
     IUPAC = {'A':'A', 'T':'T', 'C':'C', 'G':'G', 'Y':'CT', 'R':'AG', 'W':'AT',
              'S':'GC', 'K':'TG', 'M':'CA', 'D':'AGT', 'V':'AGC', 'H':'ACT', 'B':'CGT',
-             'X':'ACTG', '?':'ACTG', 'N':'ACTG', '-':'-'}
+             'X':'ACTG', 'N':'ACTG', '-':'-'}
 
-    def __init__(self, c):
-        s = Char.IUPAC[c]
+    def __init__(self, c, subst_c=None):
+        if subst_c:
+            s = Char.IUPAC[subst_c]
+        else:
+            s = Char.IUPAC[c]
         super().__init__(s[0])
         for _s in s[1:]:
             self.add(_s)
@@ -107,32 +113,45 @@ class Sequence(UserList):
         ascii representation of the sequence
 
     '''
-    PATTERNS = (re.compile('^[N]+'), re.compile('[N]+$'))
+    PATTERNS = (re.compile('^[N]+'), re.compile('[N]+$'),
+                re.compile('^[X]+'), re.compile('[X]+$'),
+                re.compile('^[-]+'), re.compile('[-]+$'))
     
     def __init__(self, ID, species, sequence_chars):
         super().__init__()
         self.ID, self.species = ID, species
-        for s in sequence_chars:
-            self.append(Char(s))
-        self.srep = sequence_chars
+        self.sequence_chars = sequence_chars
+        self.masked_positions = self.get_masked_positions(sequence_chars)
+        for s, m in zip(sequence_chars, self.masked_positions):
+            if m==1 and s=='-': # if - is used to mask the start/end of sequences, treat as N
+                subst_s = 'N'
+            else:
+                subst_s = None
+            self.append(Char(s, subst_s))
+
 
     def __repr__(self):
-        return "Sequence {}({}) {}".format(self.species, self.ID, self.srep)
+        return "Sequence {}({}) {}".format(self.species, self.ID, self.sequence_chars)
 
-    def get_masked_positions(self):
+    def get_masked_positions(self, sequence_chars):
         ''' Get masked positions
 
         Returns the positions where this sequences has a continuous block of N characters,
         either leading, or trailing.
 
+        Parameters
+        ----------
+        sequence_chars : str
+            string of sequence characters
+        
         Returns
         -------
         m : list of int
             True where masked N appears.
         '''
-        m = [False]*len(self.srep)
+        m = [False]*len(sequence_chars)
         for p in Sequence.PATTERNS:
-            match = p.search(self.srep)
+            match = p.search(sequence_chars)
             if match:
                 for i in range(*match.span()):
                     m[i]=True
@@ -239,7 +258,7 @@ class SequenceLogic(object):
         
         selection = []
         potential_CAs = self.mark_unit_length_states_within_set(set_A)
-        masked_positions = [b.get_masked_positions() for b in set_B]
+        masked_positions = [b.masked_positions for b in set_B]
         for j, ((is_unique, state_a), b, m) in enumerate(zip(potential_CAs, zip(*set_B), zip(*masked_positions))):
             if (method=="MDC" and is_unique) or (method=="potential_MDC_only" and not is_unique):
                 if ignore_masking_N:

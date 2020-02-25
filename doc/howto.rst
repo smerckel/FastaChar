@@ -36,9 +36,9 @@ Preparation
 The input for *fastachar* is a list of DNA sequences, formatted in the
 fasta format (see also
 https://en.wikipedia.org/wiki/FASTA_format). The program assumes that
-the DNA sequences that are going to be compared are:
+the DNA sequences that are going to be compared already:
 
-* already aligned, and
+* are aligned, and
 * written into a single file in fasta format.
 
 There are several software programs to align sequences (e.g. Mega and Geneious).
@@ -162,7 +162,34 @@ selected. Two operations are implemented:
 * Determining MDCs for species list A
 * Determining potential MDCs for species list A
 
-After selecting the operation, the operation is executed after
+The behaviour of both operations depend on the settting of the option
+*Ignore masking N characters*. When checked, the operations ignore
+those parts of the sequences in list B that are masked by the character N. For a
+character N to be considered a masking N, it should appear in a
+continous block of N-characters that either starts the sequence, or
+ends the sequence.
+
+For example, consider the sequence::
+
+  NNNNNNNNNAACTGGCCTNTTNN
+
+Herein, the first 9, as well as the last 2 characters form a
+continuous block of N's, that either start or end the sequence. These
+characters are considered masking characters. If *Ignore masking N characters* is checked, then the
+sequences' masked characters are not included in any of the two
+operations. This means that only in this case FastaChar may yield
+(potential) MDCs for positions where one or more sequences in list B have
+masking N characters. 
+
+Note that in the example above, the fifth character
+from the end, also a N, is not part of a block that either starts or
+ends the sequence. For this position, the conditions for (potential)
+MDCs are not met, and therefore the species in list A cannot have a
+MDC at this position.
+
+
+After selecting the operation, and optionally checking the box *Ignore
+masking N characters*, the operation is executed by
 clicking the *Process* button, and a report appears in the lower text
 box, see Figure 1.
 
