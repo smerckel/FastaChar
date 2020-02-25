@@ -162,7 +162,7 @@ selected. Two operations are implemented:
 * Determining MDCs for species list A
 * Determining potential MDCs for species list A
 
-The behaviour of both operations depend on the settting of the option
+The behaviour of both operations depends on the settting of the option
 *Ignore masking N characters*. When checked, the operations ignore
 those parts of the sequences in list B that are masked by the character N. For a
 character N to be considered a masking N, it should appear in a
