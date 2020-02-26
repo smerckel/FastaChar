@@ -4,7 +4,7 @@ What is Fastachar for and how to use it?
 **Fastachar** is a graphical user interface to the **fastachar** python module
 that allows a user to compare pre-aligned DNA sequences. Sequences of different 
 markers must be analysed individually (not concatenated). A typical application is to 
-distinguish one species from a set of different, but closely related other species, 
+distinguish one species from a set of different, but closely related species, 
 based on DNA sequences.
 
 Example
@@ -14,7 +14,7 @@ Let's assume we have DNA sequences from specimens of cryptic species
 (a pair or more). After the discovery of the new species it is
 paramount to carry out the final step in taxonomy, their description.
 However, in this case, the morphological characters *per se* cannot be
-use to describe the new cryptic species. Therefore, molecular
+used to describe the new cryptic species. Therefore, molecular
 diagnostic characters (present in all members of a taxon and absent in
 all other taxa) can be obtained from the DNA sequences. These
 characters can be used to describe a species in a similar fashion to
@@ -22,7 +22,7 @@ traditional morphological diagnostic characters used for species
 descriptions. To that end, the algorithm compares two sets of
 sequences, with one set consisting of a number of sequences of a taxon
 (e.g., a new species) and the other consisting of sequences of other
-taxa (e.g., conspecific or confamilial species). For each homologous
+taxa (e.g., congeneric or confamilial species). For each homologous
 position in the alignment (pre-aligned sequences), the algorithm tests
 for all characters of the sequence in the first set to be the same and
 to be different from all other characters of the sequences in the
@@ -36,9 +36,9 @@ Preparation
 The input for *fastachar* is a list of DNA sequences, formatted in the
 fasta format (see also
 https://en.wikipedia.org/wiki/FASTA_format). The program assumes that
-the DNA sequences that are going to be compared are:
+the DNA sequences that are going to be compared already:
 
-* already aligned, and
+* are aligned, and
 * written into a single file in fasta format.
 
 There are several software programs to align sequences (e.g. Mega and Geneious).
@@ -117,7 +117,7 @@ regular expressions and a worked example.
 
 After editing the regular expressions, the button *Cancel* cancels
 the modification, whereas the button *OK* accepts them. The button
-*Preview file* provides the user with a chooser to select a fasta
+*Preview file* provides the user with a file chooser dialogue to select a fasta
 file. After this selection, the file is opened, and parsed. Each
 header is interpreted and how it fares is shown in a separate window:
 
@@ -139,7 +139,7 @@ erroneous results are displayed.
   correctly, a work around would be to describe the header string as
   *{SPECIES}{ID}*, leave the regex for the ID blank, and for the
   SPECIES a regular expression *.+* is prescribed. FastaChar will now
-  ignore any ideas and consider the header of each sequence as a
+  ignore any id's and consider the header of each sequence as a
   separate species.
 
 
@@ -162,7 +162,34 @@ selected. Two operations are implemented:
 * Determining MDCs for species list A
 * Determining potential MDCs for species list A
 
-After selecting the operation, the operation is executed after
+The behaviour of both operations depends on the settting of the option
+*Ignore masking N characters*. When checked, the operations ignore
+those parts of the sequences in list B that are masked by the character N. For a
+character N to be considered a masking N, it should appear in a
+continous block of N-characters that either starts the sequence, or
+ends the sequence.
+
+For example, consider the sequence::
+
+  NNNNNNNNNAACTGGCCTNTTNN
+
+Herein, the first 9, as well as the last 2 characters form a
+continuous block of N's, that either start or end the sequence. These
+characters are considered masking characters. If *Ignore masking N characters* is checked, then the
+sequences' masked characters are not included in any of the two
+operations. This means that only in this case FastaChar may yield
+(potential) MDCs for positions where one or more sequences in list B have
+masking N characters. 
+
+Note that in the example above, the fifth character
+from the end, also a N, is not part of a block that either starts or
+ends the sequence. For this position, the conditions for (potential)
+MDCs are not met, and therefore the species in list A cannot have a
+MDC at this position.
+
+
+After selecting the operation, and optionally checking the box *Ignore
+masking N characters*, the operation is executed by
 clicking the *Process* button, and a report appears in the lower text
 box, see Figure 1.
 
