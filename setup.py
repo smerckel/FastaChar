@@ -1,6 +1,8 @@
 from setuptools import setup
-import fastachar
 
+import sys
+sys.path.insert(0, '.')
+import fastachar
 long_description='''
 Fastachar
 =========
