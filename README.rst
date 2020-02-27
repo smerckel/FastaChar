@@ -1,3 +1,5 @@
+|PyPI version| |Docs badge| |License|
+
 Fastachar
 =========
 
@@ -111,3 +113,11 @@ Authors
 * Luisa Borges (info at cubic-l.science or luisaborges2000 at yahoo.co.uk)
 
 The software is released under the GPLv3 licence.
+
+
+.. |PyPI version| image:: https://badgen.net/pypi/v/FastaChar
+   :target: https://pypi.org/project/FastaChar
+.. |Docs badge| image:: https://cubic-l.science/fastachar_doc/docpassing.svg
+   :target: https://dbdreader.readthedocs.io/en/latest/
+.. |License| image:: https://img.shields.io/badge/License-GPLv3-blue.svg
+   :target: https://www.gnu.org/licenses/gpl-3.0

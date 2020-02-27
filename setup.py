@@ -1,4 +1,5 @@
 from setuptools import setup
+import fastachar
 
 long_description='''
 Fastachar
@@ -24,7 +25,7 @@ assumed that the sequences were previously aligned with different algorithms
 '''
 
 setup(name="fastachar",
-      version="0.2.1",
+      version=fastachar.__version__,
       packages = ['fastachar'],
       py_modules = [],
       entry_points = {'console_scripts':[],
