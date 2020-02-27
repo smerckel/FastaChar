@@ -175,7 +175,6 @@ class Case(object):
                  setA,
                  setB,
                  operation,
-                 ignore_masking_N, 
                  regex_header_format,
                  regex_id,
                  regex_species):
@@ -194,8 +193,6 @@ class Case(object):
             list of sequences in list B
         operation : int
             operation of comparison
-        ignore_masking_N : int
-            if 1, apply mask to leading and trailing N chars
         regex_header_format : str
             regular expression for the header format
         regex_id : str
@@ -208,7 +205,6 @@ class Case(object):
                          setA=setA,
                          setB=setB,
                          operation=operation,
-                         ignore_masking_N=ignore_masking_N,
                          regex_header_format=regex_header_format,
                          regex_id=regex_id,
                          regex_species=regex_species)
@@ -291,7 +287,6 @@ class Case(object):
             fp.write("setA = {}\n".format(" , ".join(self.data['setA'])))
             fp.write("setB = {}\n".format(" , ".join(self.data['setB'])))
             fp.write("operation = {}\n".format(self.data['operation']))
-            fp.write("ignore_masking_N = {}\n".format(self.data['ignore_masking_N']))
             fp.write("regex_header_format = {}\n".format(self.data['regex_header_format']))
             fp.write("regex_id = {}\n".format(self.data['regex_id']))
             fp.write("regex_species = {}\n".format(self.data['regex_species']))
@@ -381,6 +376,7 @@ class Gui():
             pattern_dict, regex_dict = self.alignment.generate_regex_dict(*[i.get() for i in regexs])
         except:
             self.error_window(err_code=0b1000, arg = 'Failed to interpret the regular expression patterns.', parent=parent)
+            self.fasta_file_is_valid = False
             return
 
         
@@ -503,7 +499,12 @@ class Gui():
         self.config.config['REGEX']['header_format'] = v[0].get()
         self.config.config['REGEX']['id'] = v[1].get()
         self.config.config['REGEX']['species'] = v[2].get()
-        if self.fasta_file and self.fasta_file_is_valid:
+        try:
+            fasta_file_is_valid = self.fasta_file_is_valid
+        except AttributeError:
+            fasta_file_is_valid = False
+            
+        if self.fasta_file and fasta_file_is_valid:
             self._open_fasta_file()
         window.destroy()
         
@@ -533,9 +534,6 @@ class Gui():
         for line in lines:
             report.insert(Tk.END, "{}\n".format(line))
         report.config(state=Tk.DISABLED)
-        report.tag_configure("red", foreground="red")
-        report.highlight_pattern("the", "red")
-
         toplevel.focus_force()
         
     def about_window(self):
@@ -733,13 +731,6 @@ class Gui():
                        variable=self.operation_method, value=1).pack(anchor=Tk.W)
         Tk.Radiobutton(frame, text="Determine potential MDCs for species list A",
                        variable=self.operation_method, value=2).pack(anchor=Tk.W)
-        # check box for (de)selecting the use of masking Ns
-        Tk.Label(frame, text="Option").pack(anchor=Tk.N)
-        
-        self.ignore_masking_N = Tk.IntVar()
-        self.ignore_masking_N.set(0)
-        chk_button = Tk.Checkbutton(frame, text="Ignore masking N characters", variable=self.ignore_masking_N)
-        chk_button.pack(anchor=Tk.N)
         
         bt_run = Tk.Button(root, text="Process", command=self.cb_run)
         bt_run.grid(row=3, column=1, **cnf)
@@ -1053,7 +1044,6 @@ class Gui():
         Callback to run operation and do the comparison.
         '''
         operation = self.operation_method.get()
-        ignore_masking_N = self.ignore_masking_N.get()
         set_A = self.alignment.select_sequences_from_list(self.data[self.lb_A])
         set_B = self.alignment.select_sequences_from_list(self.data[self.lb_B])
         if len(set_A)==0 or len(set_B)==0:
@@ -1065,7 +1055,6 @@ class Gui():
                                self.data[self.lb_A],
                                self.data[self.lb_B],
                                operation,
-                               ignore_masking_N,
                                self.alignment.pattern_dict['HEADER'],
                                self.alignment.pattern_dict['ID'],
                                self.alignment.pattern_dict['SPECIES'])
@@ -1079,7 +1068,7 @@ class Gui():
                        2 : 'potential_MDC_only'}
         if operation in [1,2]:
             result = logic.compute_mdcs(set_A, set_B,
-                                        method=mdc_method[operation], ignore_masking_N=ignore_masking_N)
+                                        method=mdc_method[operation])
             report.report_header(set_A, set_B, method=mdc_method[operation])
             report.report_mdcs("List A", set_A, set_B, result, method=mdc_method[operation])
             report.report_footer()

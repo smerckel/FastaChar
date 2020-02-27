@@ -50,16 +50,19 @@ class Char(set):
              'S':'GC', 'K':'TG', 'M':'CA', 'D':'AGT', 'V':'AGC', 'H':'ACT', 'B':'CGT',
              'X':'ACTG', 'N':'ACTG', '-':'-'}
 
-    def __init__(self, c, subst_c=None):
-        if subst_c:
-            s = Char.IUPAC[subst_c]
-        else:
-            s = Char.IUPAC[c]
+    def __init__(self, c, masked):
+        s = Char.IUPAC[c]
         super().__init__(s[0])
         for _s in s[1:]:
             self.add(_s)
         self._value = c
-        
+        self._masked = masked
+
+    @property
+    def is_masked(self):
+        ''' Evaluates to True if this character is a masked character.'''
+        return self._masked
+    
 class State(set):
     ''' The class' purpose is to hold a number of Char objects
         and treat these as a set.
@@ -78,7 +81,11 @@ class State(set):
         self._value = []
         self._chars = []
         for _char in chars:
-            self.update(_char)
+            if not _char.is_masked:
+                self.update(_char)
+                self._value.append(_char._value)
+            else:
+                self._value.append(' ')
 
     def update(self, s):
         ''' update the set with a new element
@@ -88,7 +95,6 @@ class State(set):
         s : instance of a Char object
 
         '''
-        self._value.append(s._value)
         self._chars.append(s)
         super().update(s)
 
@@ -123,11 +129,7 @@ class Sequence(UserList):
         self.sequence_chars = sequence_chars
         self.masked_positions = self.get_masked_positions(sequence_chars)
         for s, m in zip(sequence_chars, self.masked_positions):
-            if m==1 and s=='-': # if - is used to mask the start/end of sequences, treat as N
-                subst_s = 'N'
-            else:
-                subst_s = None
-            self.append(Char(s, subst_s))
+            self.append(Char(s, m))
 
 
     def __repr__(self):
@@ -136,7 +138,7 @@ class Sequence(UserList):
     def get_masked_positions(self, sequence_chars):
         ''' Get masked positions
 
-        Returns the positions where this sequences has a continuous block of N characters,
+        Returns the positions where this sequences has a continuous block of N, X or - characters,
         either leading, or trailing.
 
         Parameters
@@ -219,7 +221,7 @@ class SequenceLogic(object):
         return [(j, s) for j, (c, s) in enumerate(r) if c]
 
     
-    def compute_mdcs(self, set_A, set_B, method = "MDC", ignore_masking_N=False):
+    def compute_mdcs(self, set_A, set_B, method = "MDC"):
         '''Computes molecular diagnostic characters
         
         Parameters
@@ -232,9 +234,6 @@ class SequenceLogic(object):
         method: {"MDC", "potential_MDC_only"}
             method of comparison.
 
-        ignore_masking_N : bool
-            flag to ignore leading and trailing N characters in sequences, as theses are (probably) used
-            as masks.
 
         Returns
         -------
@@ -258,16 +257,13 @@ class SequenceLogic(object):
         
         selection = []
         potential_CAs = self.mark_unit_length_states_within_set(set_A)
-        masked_positions = [b.masked_positions for b in set_B]
-        for j, ((is_unique, state_a), b, m) in enumerate(zip(potential_CAs, zip(*set_B), zip(*masked_positions))):
+        
+        for j, ((is_unique, state_a), b) in enumerate(zip(potential_CAs, zip(*set_B))):
             if (method=="MDC" and is_unique) or (method=="potential_MDC_only" and not is_unique):
-                if ignore_masking_N:
-                    b_reduced = tuple([_b for _b, _m in zip(b, m) if not _m])
-                if not ignore_masking_N or not b_reduced: # avoid that b will be empty (all entries are N)
-                    b_reduced = b
                 state_b = State(b)
-                state_b_reduced = State(b_reduced)
-                if not state_a.intersection(state_b_reduced):
+                if not state_a or not state_b: # if either set is empty, there cannot be a MDC. 
+                    continue
+                if not state_a.intersection(state_b):
                     selection.append((j, state_a, state_b))
         return selection
 
