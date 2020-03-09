@@ -1,3 +1,5 @@
+from . import __version__
+
 ERRORS = {0b0001:'File not found',
           0b0010:'Invalid or corrupt file',
           0b0011:'Could not save file',
@@ -10,10 +12,10 @@ ERRORS = {0b0001:'File not found',
 
 
 
-ABOUT_TEXT="""
+ABOUT_TEXT=f"""
 ABOUT
 
-FastaChar V0.1.0 is a simple python program that reads a fasta file
+FastaChar V{__version__} is a simple python program that reads a fasta file
 with sequences for a number of different species. From the list
 of species, the user can make a selection of two sets (A) and 
 (B), which can be analysed. 
