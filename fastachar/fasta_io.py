@@ -238,13 +238,15 @@ class Alignment(object):
 
         Returns
         -------
-        list of str
+        tuple of (list of str, list of int)
             list of sorted species names.
+            list of number of sequences in (sorted) species names
         '''
         d = self.get_species_info()
         k = list(d.keys())
         k.sort()
-        return k
+        n = [len(d[i]) for i in k]
+        return k, n
 
     def select_sequences(self, regex, invert = False, exclude=None):
         '''

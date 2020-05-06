@@ -716,10 +716,11 @@ class Gui():
         self.lb_sequences.grid(column=0, row=0, **cnfsticky)
         self.lb_A.grid(column=0, row=0, **cnfsticky)
         self.lb_B.grid(column=0, row=0, **cnfsticky)
-        self.data=dict()
-        self.data[self.lb_sequences]=[]
-        self.data[self.lb_A]=[]
-        self.data[self.lb_B]=[]
+        self.data = dict()
+        self.data[self.lb_sequences] = []
+        self.data[self.lb_A] = []
+        self.data[self.lb_B] = []
+        self.data_nsequences  = dict() # holds how many sequences a specific identifier holds.
         
         # operation label and operation radio buttons
         Tk.Label(root, text="Operation").grid(row=2, column=0, **cnf)
@@ -795,10 +796,11 @@ class Gui():
         items.reverse()
         for i in items:
             lb_from.delete(i)
-            s=self.data[lb_from].pop(i)
-            self.data[lb_to].append(s)
+            species=self.data[lb_from].pop(i)
+            self.data[lb_to].append(species)
             self.data[lb_to].sort()
-            j=self.data[lb_to].index(s)
+            j=self.data[lb_to].index(species)
+            s = "%s (%d)"%(species, self.data_nsequences[species])
             lb_to.insert(j,s)
             
         
@@ -822,7 +824,8 @@ class Gui():
         if delete_all:
             lb.delete(0,Tk.END)
         for item in items:
-            lb.insert(Tk.END, item)
+            s = "%s (%d)"%(item, self.data_nsequences[item]) # make the item contain the number of sequences.
+            lb.insert(Tk.END, s)
         
     def cb_open_fasta_file(self):
         '''
@@ -878,12 +881,13 @@ class Gui():
             error, arg = self.alignment.load(self.fasta_file)
             if error == fasta_io.OK:
                 try:
-                    species = self.alignment.get_species_list()
+                    species, n_species = self.alignment.get_species_list()
                 except:
                     error = fasta_io.ERROR_FILE_INVALID
                     arg = ''
                 else:
-                    species.sort()
+                    for _s, _n in zip(species, n_species):
+                        self.data_nsequences[_s] = _n 
                     self.data[self.lb_sequences] = species
                     self.data[self.lb_A] = []
                     self.data[self.lb_B] = []
