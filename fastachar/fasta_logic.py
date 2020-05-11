@@ -105,6 +105,10 @@ class State(set):
         m = "{} ({})".format(super().__repr__(), "".join(self._value))
         return m
 
+    @property
+    def state(self):
+        s = ["{}".format(_s) for _s in self]
+        return "/".join(s)
 
 class Sequence(UserList):
     ''' A class to hold the information of a single sequence 

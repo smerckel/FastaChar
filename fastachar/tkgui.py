@@ -229,7 +229,10 @@ class Case(object):
         kwd=kwd.strip()
         value=value.strip()
         if kwd in Case.LIST_KWDS:
-            value=[i.strip() for i in value.split(",")]
+            if value:
+                value=[i.strip() for i in value.split(",")]
+            else:
+                value = []
             value.sort()
         return kwd, value
     
@@ -906,7 +909,6 @@ class Gui():
             error, arg = self.case.load(case_file)
             if error == fasta_io.OK:
                 self.fasta_file = self.case.data['filename']
-
                 regex_header_format = self.case.data['regex_header_format']
                 regex_id = self.case.data['regex_id']
                 regex_species = self.case.data['regex_species']
@@ -914,6 +916,9 @@ class Gui():
                 
                 error, arg = self.alignment.load(self.fasta_file)
                 if error == fasta_io.OK:
+                    species, n_species = self.alignment.get_species_list()
+                    for _s, _n in zip(species, n_species):
+                        self.data_nsequences[_s] = _n 
                     self.data[self.lb_sequences] = self.case.data["species"]
                     self.populate_list_with_items(self.case.data["species"],
                                                   self.lb_sequences, delete_all=True)

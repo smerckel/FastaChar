@@ -8,7 +8,6 @@ import xlwt
 
 from .fasta_logic import Sequence, State
 
-
 OK = 0b0000
 ERROR_FILE_NOT_FOUND = 0b0001
 ERROR_FILE_INVALID = 0b0010
@@ -23,8 +22,11 @@ class Alignment(object):
     ''' 
     Class to hold sequences 
     '''
-    def __init__(self):
-        self.sequences = []
+    def __init__(self, sequences=None):
+        if sequences is None:
+            self.sequences = []
+        else:
+            self.sequences = sequences
         self.set_fasta_hdr_fmt()
         
     def set_fasta_hdr_fmt(self,header_format = "{ID}[_ ]{SPECIES}",
@@ -718,6 +720,43 @@ class ReportXLS(object):
                 self.sheet.write(n, 2+ len_A + i, _state)
             n+=1
         self.__row = n
+        self.report_mdcs_summary(set_A, set_B, mdcs, method)
+        
+    def report_mdcs_summary(self, set_A, set_B, mdcs, method):
+        n = self.__row + 2
+        alignmentA = Alignment(set_A)
+        alignmentB = Alignment(set_B)
+        # print the header first
+        spA, nA = alignmentA.get_species_list()
+        lenA = len(spA)
+        spB, nB = alignmentB.get_species_list()
+        self.sheet.write(n, 1, "Position")
+        for i, (_s,_n) in enumerate(zip(spA, nA)):
+            self.sheet.write(n, 2+i, "Set A")
+            self.sheet.write(n+1, 2+i, "%s(%d)"%(_s, _n))
+        for i, (_s,_n) in enumerate(zip(spB, nB)):
+            self.sheet.write(n, lenA+2+i, "Set B")
+            self.sheet.write(n+1, lenA+2+i, "%s(%d)"%(_s, _n))
+        n+=2
+        A={}
+        for sp in spA:
+            sequences = [_s for _s in set_A if _s.species==sp]
+            A[sp] = [State(c) for c in zip(*sequences)]
+        B={}
+        for sp in spB:
+            sequences = [_s for _s in set_B if _s.species==sp]
+            B[sp] = [State(c) for c in zip(*sequences)]
+        for j, mdc in enumerate(mdcs):
+            position = mdc[0]
+            self.sheet.write(n+j,1, "%d"%(position+1))# position
+            for i, sp in enumerate(spA):
+                state = A[sp][position]
+                self.sheet.write(n+j,2+i, "%s"%(state.state))# set values
+            for i, sp in enumerate(spB):
+                state = B[sp][position]
+                self.sheet.write(n+j,lenA+2+i, "%s"%(state.state))# set values
+        self.__row = n
+                            
         
     def report_nucs(self, set_name, nucs):
         '''
