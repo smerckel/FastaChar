@@ -30,7 +30,7 @@ you will need to install tkinter yourself, which is probably best done
 via your distribution's package manager.
 
 **Fastachar** can be installed from pypi, using pip from the command
-line:::
+line::
   
   $ pip3 install fastachar
   
@@ -41,6 +41,10 @@ the .tgz file and cd-ing into the newly created directory, you run::
 
 Either installation method for **Fastachar** should take care of
 installing the dependencies (xlwt) correctly.
+
+.. note:: In recent versions of linux python3 may be installed as
+	  default, and commands such as ``pip3`` and ``python3`` should be
+	  spelled without the suffix 3.
 
 
 Windows
@@ -80,6 +84,3 @@ or::
   py -3 pip -m install fastachar
   
 which should also install the dependency xlwt.
-
-Alternatively, **Fastachar** can be installed using an MSI file, which
-can be downloaded from http://cubic-l.science/fastachar.html.

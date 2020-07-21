@@ -134,13 +134,12 @@ name. If the parsing fails completely, dashes only are shown. If the
 regular expressions do not match the format of the header strings,
 erroneous results are displayed.
 
-**TIP**::
-  If some how the program is not capable of parsing the strings
-  correctly, a work around would be to describe the header string as
-  *{SPECIES}{ID}*, leave the regex for the ID blank, and for the
-  SPECIES a regular expression *.+* is prescribed. FastaChar will now
-  ignore any id's and consider the header of each sequence as a
-  separate species.
+.. note:: If some how the program is not capable of parsing the strings
+	  correctly, a work around would be to describe the header string as
+	  *{SPECIES}{ID}*, leave the regex for the ID blank, and for the
+	  SPECIES a regular expression *.+* is prescribed. FastaChar will now
+	  ignore any id's and consider the header of each sequence as a
+	  separate species.
 
 
 Selecting species for lists A and B
@@ -249,7 +248,3 @@ respectively.
 
 
 
-.. [Merckelbach2020] "FastaChar: software for rapid determination of
-		     molecular diagnostic characters to describe
-		     species" by Merckelbach, Lucas; Borges, Luisa
-		     Maria. Submitted for publication.

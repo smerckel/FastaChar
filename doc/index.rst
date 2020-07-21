@@ -13,14 +13,15 @@ one or several taxonomically-informative DNA markers of a selected taxon
 compared to those of other taxa (as many as required by the user) in a single step.
 The input data consists of a single file with aligned sequences in the fasta format,
 which can be created using alignment software such as MEGA or
-GENEIOUS.
+GENEIOUS. The software is described by Merckelbach and Borges (2020) [Merckelbach2020]_.
 
 The software was developed specifically to determine molecular
 diagnostic characters for the description of Lyrodus mersinensis by
 Borges and Merckelbach (2018) [BORGES2018]_, but it can be applied to
 any taxon.  Since FastaChar is an intuitive and easy-to-use software, we
-hope it will contribute to speed up species descriptions by helping
-taxonomists to use the standardized method for cryptic species.
+hope it helps to standardize the use of molecular data and stimulate
+researchers to proceed to the final step of molecular taxonomy, that
+is, describe the new species.
 
 **Fastachar** is written in Python3, and is released as open source
 software under the GPLv3 GNU Public License. The installation of the
@@ -43,8 +44,16 @@ References to the fastachar source code
 * :ref:`modindex`
 * :ref:`search`
 
+.. [Merckelbach2020]  Merckelbach,L.M., & Borges, L. M. S. (2020). Make every species count:
+		      fastachar software for rapid determination of
+		      molecular diagnostic haracters to describe
+		      species.
+		      Molecular Ecology Resources. 00:1–8.
+		      https://doi.org/10.1111/1755-0998.13222. 
 
 .. [BORGES2018]  Borges, L. M. S., & Merckelbach, L. M. (2018). Lyrodus mersinensis sp.
 		 nov. (Bivalvia: Teredinidae) another cryptic species in the Lyrodus
 		 pedicellatus (Quatrefages, 1849) complex. Zootaxa, 4442(3), 441–457.
 		 https://doi.org/10.11646/zootaxa.4442.3.6
+
+		 
