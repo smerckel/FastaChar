@@ -33,8 +33,8 @@ else:
     # all well.
     species = alignment.get_species_list()
     print("Species in this file:")
-    for s in species:
-        print("{:30s}".format(s))
+    for s,n in zip(*species):
+        print("{:3s} ({:d} sequences)".format(s,n))
     print()
 
     # Divide all the species in two groups, set A that matches the regex,
