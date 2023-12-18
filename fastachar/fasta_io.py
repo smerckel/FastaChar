@@ -1,5 +1,6 @@
 from collections import defaultdict
 from itertools import zip_longest
+import logging
 import os
 import re
 import sys
@@ -17,6 +18,7 @@ ERROR_UNEQUAL_SEQS = 0b0101
 ERROR_CASE         = 0b0111
 ERROR_UNKNOWN      = 0b1111
 
+logger = logging.getLogger()
 
 class Alignment(object):
     ''' 
@@ -120,35 +122,41 @@ class Alignment(object):
             arg = fn
             return error, arg
         # File can be opened...
-        cnt = 0
+        data = ""
+        hdr = ""
         with open(fn) as f:
-            while True:
-                hdr = f.readline()
-                if not hdr:
-                    break
-                cnt+=1
-                try:
-                    data = f.readline().strip()
-                except:
-                    error = ERROR_IO
-                    arg = hdr
-                else:
-                    cnt+=1
-                    try:
-                        sequences.append(Sequence(*self.parse_hdr(hdr), data))
-                    except ValueError as e:
-                        error = ERROR_FILE_INVALID
-                        arg = "Error: %s\nOffending line: %d\n"%(e.args[0], cnt-1)
+            for cnt, line in enumerate(f):
+                if not line.startswith(">"):
+                    data += line.strip()
+                    continue
+                if hdr: # if a header has been read, then process the sequence.
+                    error, arg = self.__add_sequence(sequences, hdr, data, cnt)
+                    if error: # end loop when there is an issue.
                         break
-                    except KeyError as e:
-                        error = ERROR_FILE_NOT_FOUND
-                        arg = "Error: Invalid character encountered ('%s')\nOffending line :%d\n"%(e.args[0], cnt)
-                        break
+                hdr = line.strip() # new header read, reset data.
+                data=""
+        if not error: # process the last seqence too.
+            error, arg = self.__add_sequence(sequences, hdr, data, cnt)
         if not error and not self.are_sequences_of_equal_lengths(sequences):
             error = ERROR_UNEQUAL_SEQS
         self.sequences = sequences
         return error, arg
-                
+
+
+    def __add_sequence(self, sequences, hdr, data, cnt):
+        try:
+            sequences.append(Sequence(*self.parse_hdr(hdr), data))
+        except ValueError as e:
+            error = ERROR_FILE_INVALID
+            arg = "Error: %s\nOffending line: %d\n"%(e.args[0], cnt-1)
+        except KeyError as e:
+            error = ERROR_FILE_NOT_FOUND
+            arg = "Error: Invalid character encountered ('%s')\nOffending line :%d\n"%(e.args[0], cnt)
+        else:
+            error = OK
+            arg = ""
+        return error, arg
+            
     
     def parse_hdr(self, hdr, **kwds):
         ''' 
@@ -179,7 +187,7 @@ class Alignment(object):
         #>WBET042_Lyrodus_pedicellatus_Brittany_France
         if hdr[0] != ">" or len(hdr)==1:
             raise ValueError("Invalid header/file.")
-        s = hdr[1:].strip()
+        s = hdr[1:]
         # Test whether we have a header with an ID. If not, create one of the form ID001. If yes, strip it from the species name.
         if regex_dict['header'].match(s) is None:
             raise ValueError("Parsing error of header.\nHeader: {header}\nFormat: {hformat}\nPattern: {pattern}\n".format(header=hdr.strip(),
@@ -788,3 +796,5 @@ class ReportXLS(object):
             n+=1
 
     
+
+            
