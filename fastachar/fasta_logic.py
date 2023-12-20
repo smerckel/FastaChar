@@ -51,10 +51,7 @@ class Char(set):
              'X':'ACTG', 'N':'ACTG', '-':'-'}
 
     def __init__(self, c, masked):
-        s = Char.IUPAC[c]
-        super().__init__(s[0])
-        for _s in s[1:]:
-            self.add(_s)
+        super().__init__(Char.IUPAC[c])
         self._value = c
         self._masked = masked
 
@@ -188,6 +185,7 @@ class SequenceLogic(object):
             condition =  len(s) == 1
             selection.append((condition, s))
         return selection
+
         
     def list_non_unique_characters_in_set(self, aset):
         ''' 
@@ -205,7 +203,7 @@ class SequenceLogic(object):
             than one different characters were found.
         '''
         r = self.mark_unit_length_states_within_set(aset)
-        return [(j, s) for j, (c, s) in enumerate(r) if not c]
+        return [(j, s) for j, (c, s) in enumerate(r) if not c and len(s)]
 
     def list_unique_characters_in_set(self, aset):
         ''' list where aset has unique characters
