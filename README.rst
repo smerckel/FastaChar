@@ -28,6 +28,8 @@ code yourself. The application is fully compatible with the latest version of Fa
 an Excel xls file. The alternative is to export this to a csv file, which can be imported in LibreOffice and Microsoft Office yielding
 the same results. 
 
+Link to FastaChar Web Application: <https://www.cubic-l.science/webapp/fastachar.html>_
+
 The reason for xls export lacking in the web application is that the application runs in Pyodide, which runs the Python environment inside the user's
 browser. This approach does not allow external libraries (xlwt in this case) to be imported.
 
