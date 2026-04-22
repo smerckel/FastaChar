@@ -120,9 +120,9 @@ class Sequence(UserList):
         ascii representation of the sequence
 
     '''
-    PATTERNS = (re.compile('^[N]+'), re.compile('[N]+$'),
-                re.compile('^[X]+'), re.compile('[X]+$'),
-                re.compile('^[-]+'), re.compile('[-]+$'))
+    PATTERNS = (re.compile(r'^[N]+'), re.compile(r'[N]+$'),
+                re.compile(r'^[X]+'), re.compile(r'[X]+$'),
+                re.compile(r'^[-]+'), re.compile(r'[-]+$'))
     
     def __init__(self, ID, species, sequence_chars):
         super().__init__()

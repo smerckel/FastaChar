@@ -31,9 +31,10 @@ class Alignment(object):
             self.sequences = sequences
         self.set_fasta_hdr_fmt()
         
-    def set_fasta_hdr_fmt(self,header_format = "{ID}[_ ]{SPECIES}",
-                          IDregex = "[A-Za-z0-9_]+[0-9\.]+[A-Za-z0-9]*",
-                          SPECIESregex="[A-Za-z_]+"):
+    def set_fasta_hdr_fmt(self,
+                          header_format=r"{ID}[_ ]{SPECIES}",
+                          IDregex=r"[A-Za-z0-9_]+[0-9\.]+[A-Za-z0-9]*",
+                          SPECIESregex=r"[A-Za-z_]+"):
         '''
         Sets the regular expressions used to parse the fasta headers
 
@@ -87,10 +88,10 @@ class Alignment(object):
         are placeholders for the IDregex and SPECIESregex strings.
         '''
         if "{ID}" not in header_format:
-            header_format+="{ID}"
-            IDregex=''
+            header_format += "{ID}"
+            IDregex = ''
         pattern_dict = dict(ID=IDregex, SPECIES=SPECIESregex, HEADER=header_format,
-                            SEP=header_format.replace("{ID}","").replace("{SPECIES}",""))
+                            SEP=header_format.replace("{ID}", "").replace("{SPECIES}",""))
 
         regex_dict=dict(header=re.compile(header_format.format(**pattern_dict)),
                         ID_first=header_format.index("ID")<header_format.index("SPECIES"))

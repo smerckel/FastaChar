@@ -20,7 +20,7 @@
 import os
 import sys
 #sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, '..')
+sys.path.insert(0, os.path.abspath('..'))
 from fastachar import __version__ as version
 
 # -- General configuration ------------------------------------------------
@@ -32,7 +32,7 @@ from fastachar import __version__ as version
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinxcontrib.napoleon',
+extensions = ['sphinx.ext.autodoc', #  'sphinxcontrib.napoleon',
               'sphinx_rtd_theme']
 
 # Add any paths that contain templates here, relative to this directory.
