@@ -111,9 +111,6 @@ or::
   
 which should also install the dependencies numpy and xlwt.
 
-Alternatively, **Fastachar** can be installed using an MSI file, which
-can be downloaded from http://cubic-l.science/fastachar.html.
-
 
 
 Authors
