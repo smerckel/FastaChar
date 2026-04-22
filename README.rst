@@ -117,9 +117,7 @@ The software is released under the GPLv3 licence.
 
 .. |PyPI version| image:: https://badgen.net/pypi/v/FastaChar
    :target: https://pypi.org/project/FastaChar
-.. |Docs badge| image:: https://readthedocs.org/projects/FastaChar/badge/?version=latest
-   :target: https://FastaChar.readthedocs.io/en/latest/
-.. |Docs badge| image:: https://cubic-l.science/fastachar_doc/docpassing.svg
-   :target: https://cubic-l.science/fastachar_doc/index.html
+.. |Docs badge| image:: https://readthedocs.org/projects/fastachar/badge/?version=latest
+   :target: https://fastachar.readthedocs.io/en/latest/
 .. |License| image:: https://img.shields.io/badge/License-GPLv3-blue.svg
    :target: https://www.gnu.org/licenses/gpl-3.0
