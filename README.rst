@@ -21,6 +21,15 @@ the fasta format. **Fastachar** is not a tool to align sequences. It is
 assumed that the sequences were previously aligned with different algorithms 
 (e.g. MUSCLE) and the most reliable alignment was chosen.
 
+Web-based interface
+-------------------
+**Fastachar** now has a web-based interface, which allows you to use FastaChar without installing Python or the source
+code yourself. The application is fully compatible with the latest version of FastaChar, except for exporting the results into
+an Excel xls file. The alternative is to export this to a csv file, which can be imported in LibreOffice and Microsoft Office yielding
+the same results. 
+
+The reason for xls export lacking in the web application is that the application runs in Pyodide, which runs the Python environment inside the user's
+browser. This approach does not allow external libraries (xlwt in this case) to be imported.
 
 Installation
 ------------
@@ -108,7 +117,7 @@ can be downloaded from http://cubic-l.science/fastachar.html.
 Authors
 ~~~~~~~
 
-* Lucas Merckelbach (lucas.merckelbach at hzg.de)
+* Lucas Merckelbach (lucas.merckelbach at hereon.de)
 
 * Luisa Borges (info at cubic-l.science or luisaborges2000 at yahoo.co.uk)
 
